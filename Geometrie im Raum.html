@@ -1,0 +1,845 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Licht, Schatten, Spiegelbild</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Source+Sans+3:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: Lernpfad als vertikale Route mit drei Stationen, Karopapier-Grund, Sonnengelb als einziger Akzent */
+:root{
+  --paper:#f6f7f9; --grid:#e3e7ee; --ink:#1d2a3a; --muted:#566476;
+  --card:#ffffff; --line:#d3d9e2; --sun:#b87700; --sun-soft:#fbefd2;
+  --shadow:#6b7685; --shadow-fill:rgba(70,80,95,.38); --mirror:#2f6db5; --mirror-soft:rgba(47,109,181,.12);
+  --ok:#2e7d4f; --ok-soft:#e2f2e8; --warn:#9a6a00; --warn-soft:#fbf1d9; --bad:#b3402a; --bad-soft:#f8e3de;
+  --f-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body:"Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#141a22; --grid:#1d2530; --ink:#e6ebf2; --muted:#9aa7b8; --card:#1b232e; --line:#2e3a49;
+  --sun:#f2b134; --sun-soft:#3a2e14; --shadow:#9aa6b5; --shadow-fill:rgba(160,172,188,.30); --mirror:#6fa6e8; --mirror-soft:rgba(111,166,232,.16);
+  --ok:#5fc18a; --ok-soft:#173326; --warn:#e9b949; --warn-soft:#3a2f12; --bad:#ef7a62; --bad-soft:#3d1f19; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#141a22; --grid:#1d2530; --ink:#e6ebf2; --muted:#9aa7b8; --card:#1b232e; --line:#2e3a49;
+  --sun:#f2b134; --sun-soft:#3a2e14; --shadow:#9aa6b5; --shadow-fill:rgba(160,172,188,.30); --mirror:#6fa6e8; --mirror-soft:rgba(111,166,232,.16);
+  --ok:#5fc18a; --ok-soft:#173326; --warn:#e9b949; --warn-soft:#3a2f12; --bad:#ef7a62; --bad-soft:#3d1f19; color-scheme:dark}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0}
+[hidden]{display:none!important}
+img{max-width:100%}
+.ggb-host{width:100%;min-height:0;border-radius:4px;overflow:hidden;background:var(--card)}
+body{background:var(--paper);color:var(--ink);font:17px/1.6 var(--f-body);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 64px}
+.wrap{max-width:900px;margin:0 auto}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;line-height:1.15;margin:0}
+h1{font-size:clamp(2rem,6vw,3.2rem);font-weight:700}
+h2{font-size:clamp(1.5rem,4vw,2rem);font-weight:700}
+h3{font-size:1.15rem;font-weight:700;margin-top:4px}
+p{margin:0}
+code{font-family:var(--f-mono);font-size:.88em}
+header{padding-block:40px 24px;display:grid;gap:14px}
+.eyebrow{font:600 .78rem var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.lead{font-size:1.12rem;max-width:62ch;color:var(--muted)}
+nav.route{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--paper);border-bottom:1px solid var(--line);display:flex;gap:6px;flex-wrap:wrap;padding-block:10px}
+nav.route a{font:600 .85rem var(--f-body);color:var(--ink);text-decoration:none;padding:6px 12px;border:1px solid var(--line);border-radius:999px;background:var(--card)}
+nav.route a:hover,nav.route a:focus-visible{border-color:var(--sun);outline:none}
+nav.route a b{font-family:var(--f-mono);color:var(--sun);margin-right:4px}
+section.station{margin-top:48px;display:grid;gap:20px;scroll-margin-top:70px}
+.st-head{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start}
+.st-num{font:700 2.6rem/1 var(--f-display);color:var(--sun);min-width:1.4ch}
+.goals{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.goals span{font-size:.85rem;background:var(--sun-soft);border-radius:4px;padding:3px 9px}
+.step{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:20px;display:grid;gap:12px;min-width:0}
+.step-label{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.tag{font:600 .72rem var(--f-mono);letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:3px;border:1px solid var(--line);color:var(--muted)}
+.tag.sun{border-color:var(--sun);color:var(--sun)}
+.time{font:.8rem var(--f-mono);color:var(--muted);margin-left:auto}
+ul,ol{margin:0;padding-left:1.3em}
+li+li{margin-top:4px}
+.vec{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;border-left:1.5px solid currentColor;border-right:1.5px solid currentColor;border-radius:6px;padding:0 5px;font:.85em/1.15 var(--f-mono);margin:0 2px}
+.formula{font-family:var(--f-mono);font-size:.95rem;background:var(--paper);border-radius:4px;padding:12px 14px;overflow-x:auto;line-height:2}
+.sim canvas{width:100%;height:360px;display:block;background:var(--paper);border-radius:4px;border:1px solid var(--line)}
+.sim-desc{font-size:.92rem;border-left:3px solid var(--mirror);padding-left:10px;color:var(--muted)}
+.sim-desc b{color:var(--ink)}
+.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px 18px}
+.controls label{display:grid;gap:2px;font-size:.88rem;color:var(--muted)}
+.controls output{font-family:var(--f-mono);color:var(--ink)}
+input[type=range]{width:100%;accent-color:var(--sun)}
+select{font:inherit;padding:4px 8px;border-radius:4px;border:1px solid var(--line);background:var(--card);color:var(--ink)}
+.readout{font:.9rem var(--f-mono);background:var(--paper);border-radius:4px;padding:10px 12px;overflow-x:auto;white-space:pre}
+.gg{border:1px dashed var(--mirror);border-radius:6px;padding:16px;display:grid;gap:10px;background:var(--mirror-soft)}
+.gg pre{margin:0;font:.88rem/1.6 var(--f-mono);background:var(--card);border-radius:4px;padding:10px 12px;overflow-x:auto}
+.gg a,.step a{color:var(--mirror);font-weight:600}
+.btn{font:600 .85rem var(--f-body);cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:6px 12px;border-radius:4px;justify-self:start}
+.btn:hover,.btn:focus-visible{border-color:var(--sun);outline:2px solid transparent}
+.btn:focus-visible{box-shadow:0 0 0 2px var(--sun)}
+.speak{font-size:.78rem;padding:3px 9px;margin-left:auto}
+.task{display:grid;gap:10px;padding-top:16px;border-top:1px solid var(--line)}
+.task.first{border-top:0;padding-top:0}
+.task h4{margin:0;font:700 1rem var(--f-body)}
+.lvl{font:600 .72rem var(--f-mono);color:var(--muted);margin-left:6px}
+.choice{font-size:.92rem;background:var(--sun-soft);border-radius:4px;padding:10px 12px}
+.or{font:600 .75rem var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--sun);text-align:center;padding-top:12px;border-top:1px solid var(--line)}
+.or + .task{border-top:0;padding-top:4px}
+.check{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.check input{width:74px;font:.9rem var(--f-mono);padding:5px 7px;border:1px solid var(--line);border-radius:4px;background:var(--paper);color:var(--ink)}
+.fb{font-size:.92rem;font-weight:600;flex-basis:100%}
+.fb.ok{color:var(--ok)} .fb.bad{color:var(--bad)} .fb.warn{color:var(--warn)}
+.hints{display:grid;gap:8px}
+.hint{border-left:3px solid var(--sun);padding:6px 0 6px 12px;display:grid;gap:4px}
+.hint b{font:600 .75rem var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--sun)}
+.hint.sol{border-left-color:var(--ok)} .hint.sol b{color:var(--ok)}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.schema{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.schema div{border-top:3px solid var(--sun);background:var(--paper);padding:10px 12px;font-size:.92rem}
+.schema b{display:block;font-family:var(--f-display)}
+.partner{border:1px solid var(--line);border-left:4px solid var(--mirror);border-radius:4px;padding:12px 14px;font-size:.95rem}
+.partner b{font-family:var(--f-display)}
+.express{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.express div{background:var(--paper);border-radius:4px;padding:12px;font-size:.92rem;display:grid;gap:4px;align-content:start}
+.express b{font-family:var(--f-display)}
+dl.gloss{display:grid;grid-template-columns:minmax(120px,max-content) 1fr;gap:8px 16px;margin:0}
+dl.gloss dt{font-weight:600}
+dl.gloss dd{margin:0;color:var(--muted)}
+@media (max-width:520px){dl.gloss{grid-template-columns:1fr}dl.gloss dd{margin-bottom:6px}}
+.self{display:grid;gap:10px}
+.self-row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding-block:6px;border-bottom:1px solid var(--line)}
+.self-row:last-of-type{border-bottom:0}
+.seg{display:flex;border:1px solid var(--line);border-radius:4px;overflow:hidden}
+.seg button{font:600 .78rem var(--f-body);border:0;background:var(--card);color:var(--muted);padding:6px 10px;cursor:pointer}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"][data-v="2"]{background:var(--ok-soft);color:var(--ok)}
+.seg button[aria-pressed="true"][data-v="1"]{background:var(--warn-soft);color:var(--warn)}
+.seg button[aria-pressed="true"][data-v="0"]{background:var(--bad-soft);color:var(--bad)}
+.seg button:focus-visible{outline:2px solid var(--sun);outline-offset:-2px}
+@media (max-width:560px){.self-row{grid-template-columns:1fr}}
+.advice{font-size:.95rem;background:var(--paper);border-radius:4px;padding:10px 12px}
+details.box{border-left:3px solid var(--line);padding-left:12px}
+details.box summary{cursor:pointer;font-weight:600}
+details.box > div{margin-top:10px;display:grid;gap:10px}
+table{border-collapse:collapse;width:100%;font-size:.92rem}
+.tbl{overflow-x:auto}
+th,td{text-align:left;padding:7px 9px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:600 .75rem var(--f-mono);text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+td.min{font-family:var(--f-mono);white-space:nowrap}
+.teacher{margin-top:56px}
+.note{font-size:.9rem;color:var(--muted)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+<header>
+  <span class="eyebrow">Analytische Geometrie · Q-Phase · Selbstlernpfad (3 × 45 min)</span>
+  <h1>Licht, Schatten, Spiegelbild</h1>
+  <p class="lead">Du lernst in drei Stationen, wie man mit Geraden im Raum Schattenpunkte berechnet und wie man Körper an Koordinatenebenen spiegelt. Jede Station hat eine Simulation, einen GeoGebra-Auftrag, Aufgaben mit gestuften Tipps und am Ende eine Selbsteinschätzung.</p>
+</header>
+
+<nav class="route" aria-label="Stationen">
+  <a href="#werkzeug"><b>0</b>Werkzeugkasten</a>
+  <a href="#s1"><b>1</b>Sonnenschatten</a>
+  <a href="#s2"><b>2</b>Lampenschatten</a>
+  <a href="#s3"><b>3</b>Spiegeln &amp; Volumen</a>
+  <a href="#plus"><b>+</b>Weiterführend</a>
+  <a href="#lehrkraft"><b>L</b>Für die Lehrkraft</a>
+</nav>
+
+<!-- ========== WERKZEUGKASTEN ========== -->
+<section class="station" id="werkzeug">
+  <div class="st-head"><span class="st-num">0</span>
+    <div><h2>Dein Werkzeugkasten</h2>
+      <p class="note">Hier kannst du jederzeit nachschlagen. Mit „Vorlesen“ lässt du dir Abschnitte vorlesen.</p></div></div>
+
+  <div class="step">
+    <div class="step-label"><span class="tag sun">So arbeitest du</span><h3>Dein Weg durch den Lernpfad</h3></div>
+    <ul>
+      <li>Du arbeitest in deinem Tempo. Jede Station beginnt mit Lernzielen und endet mit einer Selbsteinschätzung.</li>
+      <li>Bei den Aufgaben wählst du: mindestens eine <b>Basis</b>- und eine <b>Standard</b>-Aufgabe. <b>Erweitert</b> und <b>Profi</b> sind freiwillig.</li>
+      <li>Hängst du fest, hol dir erst Tipp 1, dann Tipp 2. Die Lösung kommt zuletzt.</li>
+      <li>Statt einer Rechenaufgabe darfst du einmal pro Station eine andere Ausdrucksform wählen: Skizze, Erklärung oder eigene Aufgabe.</li>
+    </ul>
+  </div>
+
+  <div class="step" data-speak>
+    <div class="step-label"><span class="tag">Problemlöse-Kompass</span><h3>Vier Schritte für jede Aufgabe</h3></div>
+    <div class="schema">
+      <div><b>1 Verstehen</b>Was ist gesucht, was gegeben? Lichtquelle, Objektpunkt, Ebene? Skizze anfertigen.</div>
+      <div><b>2 Zerlegen</b>Welche Gerade brauche ich? Was ist Stützvektor, was Richtungsvektor? Rechenplan aufstellen.</div>
+      <div><b>3 Durchführen</b>Gerade aufstellen, Bedingung einsetzen (z. B. x₃ = 0), Parameter berechnen, Punkt angeben.</div>
+      <div><b>4 Rückschau</b>Liegt der Punkt wirklich auf der Ebene? Passt die Richtung zur Skizze? Antwortsatz.</div>
+    </div>
+  </div>
+
+  <div class="step" data-speak>
+    <div class="step-label"><span class="tag">Glossar</span><h3>Fachbegriffe</h3></div>
+    <dl class="gloss">
+      <dt>Ortsvektor</dt><dd>Vektor vom Ursprung O zu einem Punkt P. Er hat dieselben Koordinaten wie P.</dd>
+      <dt>Parameterform einer Geraden</dt><dd>x⃗ = p⃗ + t · u⃗. Jeder Wert von t liefert einen Punkt der Geraden.</dd>
+      <dt>Stützvektor</dt><dd>Der Ortsvektor p⃗ eines festen Punktes, durch den die Gerade verläuft.</dd>
+      <dt>Richtungsvektor</dt><dd>Der Vektor u⃗, der angibt, in welche Richtung die Gerade läuft.</dd>
+      <dt>Parameter</dt><dd>Die Zahl t (oder r, s). Bei Schattenaufgaben sagt t, wie oft man den Richtungsvektor abtragen muss, bis man den Boden erreicht.</dd>
+      <dt>x₁x₂-Ebene</dt><dd>Die „Bodenebene“. Alle ihre Punkte haben x₃ = 0.</dd>
+      <dt>Parallelprojektion</dt><dd>Abbildung mit parallelen Strahlen, z. B. durch Sonnenlicht. Alle Strahlen haben denselben Richtungsvektor.</dd>
+      <dt>Zentralprojektion</dt><dd>Abbildung mit Strahlen, die von einem Punkt ausgehen, z. B. von einer Lampe.</dd>
+      <dt>Spiegelebene</dt><dd>Die Ebene, an der gespiegelt wird. Punkt und Bildpunkt haben denselben Abstand zu ihr, ihre Verbindung steht senkrecht auf ihr.</dd>
+      <dt>Bildpunkt</dt><dd>Der Punkt, der bei einer Abbildung (Schatten, Spiegelung) entsteht. Man schreibt P′.</dd>
+      <dt>Skalarprodukt</dt><dd>a⃗ · b⃗ = a₁b₁ + a₂b₂ + a₃b₃. Ist es 0, stehen die Vektoren senkrecht aufeinander.</dd>
+      <dt>Prisma</dt><dd>Körper aus zwei deckungsgleichen, parallelen Grundflächen. Volumen = Grundfläche · Höhe.</dd>
+    </dl>
+  </div>
+</section>
+
+<!-- ========== STATION 1 ========== -->
+<section class="station" id="s1">
+  <div class="st-head"><span class="st-num">1</span>
+    <div><h2>Schatten bei Sonnenlicht</h2>
+      <p class="note">Parallelprojektion · Buch S. 199 (Einstieg), S. 201 Nr. 1b, 2, 3, 7</p>
+      <div class="goals"><span>Lichtstrahl als Gerade aufstellen</span><span>Schnittpunkt mit der x₁x₂-Ebene berechnen</span><span>Schattenlänge bestimmen</span></div>
+    </div></div>
+
+  <div class="step" data-speak>
+    <div class="step-label"><span class="tag sun">Einstieg</span><h3>Wo landet der Schatten der Pyramidenspitze?</h3><span class="time">5 min</span></div>
+    <p>Eine Pyramide hat die Spitze S(0|0|4). Die Sonnenstrahlen verlaufen parallel in Richtung <span class="vec"><span>−3</span><span>3</span><span>−2</span></span>. Schätze zuerst in der Simulation, wo der Schattenpunkt S′ liegt. Verändere dann die Sonnenrichtung und beobachte, wie der Schatten wandert.</p>
+  </div>
+
+  <div class="step sim">
+    <div class="step-label"><span class="tag">Simulation</span><h3>Sonnenrichtung verändern</h3><span class="time">8 min</span></div>
+    <canvas id="c1" role="img" aria-describedby="d1" aria-label="Schrägbild einer Pyramide mit Schatten"></canvas>
+    <p class="sim-desc" id="d1" aria-live="polite"></p>
+    <div class="controls">
+      <label for="v1">v₁ <output id="o-v1">−3</output><input type="range" id="v1" min="-4" max="4" step="0.5" value="-3"></label>
+      <label for="v2">v₂ <output id="o-v2">3</output><input type="range" id="v2" min="-4" max="4" step="0.5" value="3"></label>
+      <label for="v3">v₃ (muss negativ sein) <output id="o-v3">−2</output><input type="range" id="v3" min="-4" max="-1" step="0.5" value="-2"></label>
+    </div>
+    <div class="readout" id="r1"></div>
+    <p class="note">Beobachtungsfragen: Was passiert mit der Schattenlänge, wenn v₃ betragsmäßig kleiner wird (flache Abendsonne)? Warum bleibt der Schatten der Grundfläche unverändert?</p>
+  </div>
+
+  <div class="step" data-speak>
+    <div class="step-label"><span class="tag">Merkwissen</span><h3>Das Verfahren in drei Schritten</h3><span class="time">8 min</span></div>
+    <ol>
+      <li><b>Lichtgerade aufstellen:</b> Stützvektor ist der Punkt, dessen Schatten gesucht ist. Richtungsvektor ist die Sonnenrichtung v.</li>
+      <li><b>Bedingung für den Boden:</b> Jeder Punkt der x₁x₂-Ebene hat x₃ = 0. Setze die dritte Koordinate der Geraden gleich 0 und löse nach dem Parameter auf.</li>
+      <li><b>Einsetzen:</b> Den Parameter in die Geradengleichung einsetzen ergibt den Schattenpunkt.</li>
+    </ol>
+    <div class="formula">g: x⃗ = <span class="vec"><span>0</span><span>0</span><span>4</span></span> + t · <span class="vec"><span>−3</span><span>3</span><span>−2</span></span>
+&nbsp;&nbsp;⇒&nbsp; 4 − 2t = 0 &nbsp;⇒&nbsp; t = 2 &nbsp;⇒&nbsp; S′(−6 | 6 | 0)</div>
+    <p class="note">Merke: Bei Sonnenlicht haben alle Lichtgeraden denselben Richtungsvektor. Punkte, die auf dem Boden liegen, sind ihr eigener Schatten.</p>
+    <div class="partner"><b>Partner-Check (2 min):</b> Erkläre deiner Partnerin oder deinem Partner in eigenen Worten, warum man die dritte Koordinate gleich 0 setzt. Wechselt dann: Wer erklärt, warum t positiv sein muss?</div>
+  </div>
+
+  <div class="step gg">
+    <div class="step-label"><span class="tag">GeoGebra 3D</span><h3>Selbst konstruieren</h3><span class="time">7 min</span></div>
+    <p>Öffne <a href="https://www.geogebra.org/3d" target="_blank" rel="noopener">geogebra.org/3d</a> und gib die Befehle Zeile für Zeile in die Eingabezeile ein (englische Befehle funktionieren auch bei deutscher Sprache).</p>
+    <pre>a = Slider(-4, 4, 0.5)
+S = (0, 0, 4)
+p = Pyramid((2,0,0), (0,2,0), (-2,0,0), (0,-2,0), S)
+v = Vector((a, 3, -2))
+g = Line(S, v)
+S' = Intersect(g, z = 0)</pre>
+    <p>Auftrag: Bewege den Schieberegler a. Notiere zwei Stellungen, bei denen der Schatten besonders lang bzw. kurz ist, und begründe mit dem Richtungsvektor.</p>
+  </div>
+
+  <div class="step">
+    <div class="step-label"><span class="tag">Üben</span><h3>Aufgaben mit Selbst-Check</h3><span class="time">14 min</span></div>
+    <p class="choice"><b>Deine Wahl:</b> Löse A1 <i>oder</i> A2 (Basis) und A3 <i>oder</i> A4 (Standard). A5 ist freiwillig. Statt A5 kannst du auch „Zeig, was du kannst“ bearbeiten.</p>
+
+    <div class="task first">
+      <h4>A1 · Maibaum <span class="lvl">Buch Nr. 2 · Basis</span></h4>
+      <p>Ein 8 m hoher Maibaum steht im Ursprung senkrecht auf der x₁x₂-Ebene. Sonnenrichtung <span class="vec"><span>1</span><span>1</span><span>−4</span></span>. Wie lang ist der Schatten (auf 2 Nachkommastellen)?</p>
+      <div class="check" data-ans="2.83" data-tol="0.01" data-traps="8:Das ist die Höhe des Maibaums. Gesucht ist der Abstand vom Fußpunkt zum Schattenpunkt.|2:Das ist der Parameter t. Setze ihn in die Geradengleichung ein und berechne dann die Länge.|4:Fast: Die Länge von (2|2|0) ist nicht 2 + 2, sondern √(2² + 2²)."><span>Länge in m:</span><input aria-label="Schattenlänge in Metern"><button class="btn" type="button">Prüfen</button><span class="fb" aria-live="polite"></span></div>
+      <div class="hints">
+        <div class="hint" hidden><b>Tipp 1 · Ansatz</b><p>Die Spitze des Maibaums ist (0|0|8). Stelle die Lichtgerade durch die Spitze mit der Sonnenrichtung als Richtungsvektor auf.</p></div>
+        <div class="hint" hidden><b>Tipp 2 · Parameter</b><p>8 − 4t = 0 ergibt t = 2. Der Schattenpunkt ist (2|2|0). Die Schattenlänge ist sein Abstand zum Fußpunkt (0|0|0).</p></div>
+        <div class="hint sol" hidden><b>Lösung</b><p>Länge = |(2|2|0)| = √8 = 2√2 ≈ 2,83 m.</p></div>
+        <button class="btn hint-next" type="button">Tipp 1 zeigen</button>
+      </div>
+    </div>
+
+    <p class="or">oder</p>
+    <div class="task">
+      <h4>A2 · Sendemast <span class="lvl">Buch Nr. 3 · Basis</span></h4>
+      <p>Bodenpunkt P(10|5|0), Spitze S(10|5|42), Sonnenrichtung <span class="vec"><span>4</span><span>2</span><span>−5</span></span>. Gib den Schattenpunkt der Spitze an.</p>
+      <div class="check" data-ans="43.6,21.8,0" data-tol="0.01" data-ground="1" data-traps="14,7,37:Du hast t = 1 eingesetzt. Bestimme t aus der Bedingung x₃ = 0."><span>S′(</span><input aria-label="x1"><span>|</span><input aria-label="x2"><span>|</span><input aria-label="x3"><span>)</span><button class="btn" type="button">Prüfen</button><span class="fb" aria-live="polite"></span></div>
+      <div class="hints">
+        <div class="hint" hidden><b>Tipp 1 · Ansatz</b><p>Lichtgerade: x⃗ = (10|5|42) + t · (4|2|−5).</p></div>
+        <div class="hint" hidden><b>Tipp 2 · Parameter</b><p>42 − 5t = 0 ergibt t = 8,4.</p></div>
+        <div class="hint sol" hidden><b>Lösung</b><p>S′(10 + 33,6 | 5 + 16,8 | 0) = S′(43,6 | 21,8 | 0). Der Schatten ist die Strecke PS′ mit Länge 8,4 · √20 ≈ 37,57 LE.</p></div>
+        <button class="btn hint-next" type="button">Tipp 1 zeigen</button>
+      </div>
+    </div>
+
+    <div class="task">
+      <h4>A3 · Fernsehturm Münster <span class="lvl">Buch Nr. 7 (Test 1) · Standard</span></h4>
+      <p>Bodenpunkt P(12|4|0), Spitze S(12|4|230), Sonnenrichtung <span class="vec"><span>3</span><span>2</span><span>−4</span></span>. Bestimme die Eckpunkte des Schattens.</p>
+      <div class="check" data-ans="184.5,119,0" data-tol="0.01" data-ground="1" data-traps="15,6,226:Du hast t = 1 eingesetzt. Bestimme t aus der Bedingung x₃ = 0."><span>S′(</span><input aria-label="x1"><span>|</span><input aria-label="x2"><span>|</span><input aria-label="x3"><span>)</span><button class="btn" type="button">Prüfen</button><span class="fb" aria-live="polite"></span></div>
+      <div class="hints">
+        <div class="hint" hidden><b>Tipp 1 · Ansatz</b><p>Der Bodenpunkt P ist sein eigener Schatten. Du brauchst nur die Lichtgerade durch die Spitze S.</p></div>
+        <div class="hint" hidden><b>Tipp 2 · Parameter</b><p>230 − 4t = 0 ergibt t = 57,5. Multipliziere den Richtungsvektor mit 57,5.</p></div>
+        <div class="hint sol" hidden><b>Lösung</b><p>S′(184,5 | 119 | 0). Der Schatten ist die Strecke von P(12|4|0) nach S′.</p></div>
+        <button class="btn hint-next" type="button">Tipp 1 zeigen</button>
+      </div>
+    </div>
+
+    <p class="or">oder</p>
+    <div class="task">
+      <h4>A4 · Zelt im Garten <span class="lvl">Standard</span></h4>
+      <p>Ein Zelt hat die Bodenecken (0|−1,5|0), (4|−1,5|0), (4|1,5|0), (0|1,5|0) und die Firstlinie von F₁(0|0|2) bis F₂(4|0|2). Sonnenrichtung <span class="vec"><span>1</span><span>2</span><span>−2</span></span>. Berechne die Schattenpunkte F₁′ und F₂′ und skizziere den Schatten. Gib F₂′ an.</p>
+      <div class="check" data-ans="5,2,0" data-tol="0.01" data-ground="1"><span>F₂′(</span><input aria-label="x1"><span>|</span><input aria-label="x2"><span>|</span><input aria-label="x3"><span>)</span><button class="btn" type="button">Prüfen</button><span class="fb" aria-live="polite"></span></div>
+      <div class="hints">
+        <div class="hint" hidden><b>Tipp 1 · Ansatz</b><p>Beide Firstpunkte haben die Höhe 2. Sie bekommen deshalb denselben Parameter.</p></div>
+        <div class="hint" hidden><b>Tipp 2 · Parameter</b><p>2 − 2t = 0 ergibt t = 1.</p></div>
+        <div class="hint sol" hidden><b>Lösung</b><p>F₁′(1|2|0), F₂′(5|2|0). Der Schatten wird von den Bodenecken und den Punkten F₁′, F₂′ begrenzt (äußere Punkte verbinden).</p></div>
+        <button class="btn hint-next" type="button">Tipp 1 zeigen</button>
+      </div>
+    </div>
+
+    <div class="task">
+      <h4>A5 · Turm mit Pyramidendach <span class="lvl">Buch Nr. 1b · Erweitert</span></h4>
+      <p>Quader mit Deckfläche E(2|0|6), F(0|2|6), G(−2|0|6), H(0|−2|6), Spitze S(0|0|12), Sonnenrichtung <span class="vec"><span>5</span><span>2</span><span>−3</span></span>. Berechne die Schattenpunkte von E, F, G, H und S. Gib S′ an.</p>
+      <div class="check" data-ans="20,8,0" data-tol="0.01" data-ground="1" data-traps="10,4,0:Das ist der Schatten eines Punktes in Höhe 6. Die Spitze liegt bei x₃ = 12, also ist t = 4."><span>S′(</span><input aria-label="x1"><span>|</span><input aria-label="x2"><span>|</span><input aria-label="x3"><span>)</span><button class="btn" type="button">Prüfen</button><span class="fb" aria-live="polite"></span></div>
+      <div class="hints">
+        <div class="hint" hidden><b>Tipp 1 · Ansatz</b><p>Alle Punkte der Deckfläche haben x₃ = 6. Sie bekommen denselben Parameter.</p></div>
+        <div class="hint" hidden><b>Tipp 2 · Parameter</b><p>Für E bis H: 6 − 3t = 0, also t = 2. Für S: 12 − 3t = 0, also t = 4.</p></div>
+        <div class="hint sol" hidden><b>Lösung</b><p>E′(12|4|0), F′(10|6|0), G′(8|4|0), H′(10|2|0), S′(20|8|0). Der Umriss entsteht aus den Bodenecken, E′ bis H′ und S′.</p></div>
+        <button class="btn hint-next" type="button">Tipp 1 zeigen</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" data-speak>
+    <div class="step-label"><span class="tag">Wahlaufgabe</span><h3>Zeig, was du kannst</h3></div>
+    <p>Wähle eine Form. Sie ersetzt die Erweitert-Aufgabe oder kann als Hausaufgabe dienen.</p>
+    <div class="express">
+      <div><b>Skizzieren</b><span>Zeichne die Pyramide aus dem Einstieg im Schrägbild ins Heft, mit Lichtstrahl, S′ und Schattenfläche. Beschrifte alle Punkte.</span></div>
+      <div><b>Erklären</b><span>Nimm eine Sprachnachricht (max. 1 min) auf oder schreibe einen kurzen Text für jemanden, der gefehlt hat: Wie findet man den Sonnenschatten eines Punktes?</span></div>
+      <div><b>Erfinden</b><span>Erfinde eine Schattenaufgabe zu einem Gegenstand auf eurem Schulgelände. Schreibe die Lösung auf die Rückseite und tausche mit jemandem.</span></div>
+    </div>
+  </div>
+
+  <div class="step self" data-self="s1">
+    <div class="step-label"><span class="tag sun">Selbsteinschätzung</span><h3>Wie sicher bist du?</h3><span class="time">3 min</span></div>
+    <div class="self-row"><span>Ich kann eine Lichtgerade bei Sonnenlicht aufstellen.</span><div class="seg" role="group" aria-label="Einschätzung"><button type="button" data-v="2">sicher</button><button type="button" data-v="1">teilweise</button><button type="button" data-v="0">noch nicht</button></div></div>
+    <div class="self-row"><span>Ich kann den Parameter aus x₃ = 0 bestimmen und den Schattenpunkt angeben.</span><div class="seg" role="group" aria-label="Einschätzung"><button type="button" data-v="2">sicher</button><button type="button" data-v="1">teilweise</button><button type="button" data-v="0">noch nicht</button></div></div>
+    <div class="self-row"><span>Ich kann die Länge eines Schattens berechnen.</span><div class="seg" role="group" aria-label="Einschätzung"><button type="button" data-v="2">sicher</button><button type="button" data-v="1">teilweise</button><button type="button" data-v="0">noch nicht</button></div></div>
+    <p class="advice" aria-live="polite" data-tips="Lies das Merkwissen noch einmal und löse A1 mit den Tipps. Frag beim Partner-Check gezielt nach.|Löse noch die zweite Standard-Aufgabe (A3 oder A4), diesmal ohne Tipps.|Sehr gut. Mach mit Station 2 weiter oder probiere A5.">Klicke bei jeder Aussage an, wie sicher du bist. Du bekommst dann eine Empfehlung.</p>
+  </div>
+</section>
+
+<!-- ========== STATION 2 ========== -->
+<section class="station" id="s2">
+  <div class="st-head"><span class="st-num">2</span>
+    <div><h2>Schatten einer Lampe</h2>
+      <p class="note">Zentralprojektion · Buch S. 200–201 (Beispiel), S. 201 Nr. 1a</p>
+      <div class="goals"><span>Unterschied Parallel- / Zentralprojektion</span><span>Richtungsvektor aus zwei Punkten bilden</span><span>Schattendreieck berechnen und deuten</span></div>
+    </div></div>
+
+  <div class="step" data-speak>
+    <div class="step-label"><span class="tag sun">Einstieg</span><h3>Was ändert sich, wenn das Licht von einer Lampe kommt?</h3><span class="time">5 min</span></div>
+    <p>Ein Metalldreieck mit A(4|2|3), B(4|4|3) und C(5|3|4) wird von einer punktförmigen Lampe L(8|5|6) beleuchtet. Vergleiche mit Station 1: Die Lichtstrahlen sind jetzt nicht mehr parallel, sie gehen alle vom Punkt L aus.</p>
+  </div>
+
+  <div class="step sim">
+    <div class="step-label"><span class="tag">Simulation</span><h3>Lampe verschieben</h3><span class="time">8 min</span></div>
+    <canvas id="c2" role="img" aria-describedby="d2" aria-label="Schrägbild eines Dreiecks mit Lampe und Schatten"></canvas>
+    <p class="sim-desc" id="d2" aria-live="polite"></p>
+    <div class="controls">
+      <label for="l1">L₁ <output id="o-l1">8</output><input type="range" id="l1" min="2" max="10" step="0.5" value="8"></label>
+      <label for="l2">L₂ <output id="o-l2">5</output><input type="range" id="l2" min="0" max="8" step="0.5" value="5"></label>
+      <label for="l3">L₃ (Höhe der Lampe) <output id="o-l3">6</output><input type="range" id="l3" min="4.5" max="12" step="0.5" value="6"></label>
+    </div>
+    <div class="readout" id="r2"></div>
+    <p class="note">Beobachtungsfragen: Hebe die Lampe an. Wird das Schattendreieck größer oder kleiner? Was passiert, wenn die Lampe nur knapp über der Höhe 4 hängt? Begründe mit dem Parameter t.</p>
+  </div>
+
+  <div class="step" data-speak>
+    <div class="step-label"><span class="tag">Merkwissen</span><h3>Lichtgerade bei punktförmiger Lichtquelle</h3><span class="time">8 min</span></div>
+    <p>Stützvektor ist die Lichtquelle L. Richtungsvektor ist der Vektor von L zum Objektpunkt, für A also LA⃗ = A − L.</p>
+    <div class="formula">l<sub>A</sub>: x⃗ = <span class="vec"><span>8</span><span>5</span><span>6</span></span> + t · <span class="vec"><span>−4</span><span>−3</span><span>−3</span></span>
+&nbsp;&nbsp;⇒&nbsp; 6 − 3t = 0 &nbsp;⇒&nbsp; t = 2 &nbsp;⇒&nbsp; A′(0 | −1 | 0)</div>
+    <div class="cols">
+      <div><b>Sonne (parallel)</b><br>ein Richtungsvektor für alle Strahlen, der Stützpunkt wechselt. Der Schatten ist so groß wie die Projektion des Objekts.</div>
+      <div><b>Lampe (zentral)</b><br>ein Stützpunkt L für alle Strahlen, der Richtungsvektor wechselt. Der Schatten ist größer als das Objekt (t &gt; 1).</div>
+    </div>
+    <div class="partner"><b>Partner-Check (2 min):</b> Eine Person erklärt das Vorgehen bei Sonnenlicht, die andere bei einer Lampe. Findet gemeinsam den einen Satz, der den Unterschied am besten beschreibt.</div>
+  </div>
+
+  <div class="step gg">
+    <div class="step-label"><span class="tag">GeoGebra 3D</span><h3>Schattendreieck konstruieren</h3><span class="time">7 min</span></div>
+    <p>In <a href="https://www.geogebra.org/3d" target="_blank" rel="noopener">geogebra.org/3d</a>:</p>
+    <pre>L = (8, 5, 6)
+A = (4, 2, 3)
+B = (4, 4, 3)
+C = (5, 3, 4)
+d = Polygon(A, B, C)
+A' = Intersect(Line(L, A), z = 0)
+B' = Intersect(Line(L, B), z = 0)
+C' = Intersect(Line(L, C), z = 0)
+s = Polygon(A', B', C')
+Area(d)
+Area(s)</pre>
+    <p>Auftrag: Ziehe den Punkt L in der 3D-Ansicht nach oben. Beschreibe, wie sich das Verhältnis Area(s) : Area(d) verändert.</p>
+  </div>
+
+  <div class="step">
+    <div class="step-label"><span class="tag">Üben</span><h3>Aufgaben mit Selbst-Check</h3><span class="time">14 min</span></div>
+    <p class="choice"><b>Deine Wahl:</b> Löse B1 (Basis) und B2 <i>oder</i> B3 (Standard). B4 ist freiwillig. Statt B4 kannst du auch „Zeig, was du kannst“ bearbeiten.</p>
+
+    <div class="task first">
+      <h4>B1 · Schatten von C <span class="lvl">Beispiel S. 200 · Basis</span></h4>
+      <p>Berechne mit L(8|5|6) den Schattenpunkt C′ des Punktes C(5|3|4). Kontrolliere mit der Simulation.</p>
+      <div class="check" data-ans="-1,-1,0" data-tol="0.01" data-ground="1" data-traps="5,3,4:Das ist der Punkt C selbst (r = 1). Bestimme r aus der Bedingung x₃ = 0.|-3,-1,0:Du hast mit dem Ortsvektor von C statt mit dem Vektor C − L gerechnet."><span>C′(</span><input aria-label="x1"><span>|</span><input aria-label="x2"><span>|</span><input aria-label="x3"><span>)</span><button class="btn" type="button">Prüfen</button><span class="fb" aria-live="polite"></span></div>
+      <div class="hints">
+        <div class="hint" hidden><b>Tipp 1 · Ansatz</b><p>Richtungsvektor LC⃗ = C − L = (−3|−2|−2). Stützvektor ist L.</p></div>
+        <div class="hint" hidden><b>Tipp 2 · Parameter</b><p>6 − 2r = 0 ergibt r = 3.</p></div>
+        <div class="hint sol" hidden><b>Lösung</b><p>C′(8 − 9 | 5 − 6 | 0) = C′(−1|−1|0). Analog B′(0|3|0).</p></div>
+        <button class="btn hint-next" type="button">Tipp 1 zeigen</button>
+      </div>
+    </div>
+
+    <div class="task">
+      <h4>B2 · Scheinwerfer am Turm <span class="lvl">Buch Nr. 1a · Standard</span></h4>
+      <p>Ein Scheinwerfer bei L(−1|−4|18) beleuchtet die Turmspitze S(0|0|12). Bestimme den Schattenpunkt der Spitze auf dem Boden.</p>
+      <div class="check" data-ans="2,8,0" data-tol="0.01" data-ground="1" data-traps="0,0,12:Das ist die Spitze selbst (t = 1). Gesucht ist der Punkt mit x₃ = 0."><span>S′(</span><input aria-label="x1"><span>|</span><input aria-label="x2"><span>|</span><input aria-label="x3"><span>)</span><button class="btn" type="button">Prüfen</button><span class="fb" aria-live="polite"></span></div>
+      <div class="hints">
+        <div class="hint" hidden><b>Tipp 1 · Ansatz</b><p>Richtungsvektor LS⃗ = S − L = (1|4|−6). Stützvektor ist L(−1|−4|18).</p></div>
+        <div class="hint" hidden><b>Tipp 2 · Parameter</b><p>18 − 6t = 0 ergibt t = 3.</p></div>
+        <div class="hint sol" hidden><b>Lösung</b><p>S′(−1 + 3 | −4 + 12 | 0) = S′(2|8|0).</p></div>
+        <button class="btn hint-next" type="button">Tipp 1 zeigen</button>
+      </div>
+    </div>
+
+    <p class="or">oder</p>
+    <div class="task">
+      <h4>B3 · Straßenlaterne <span class="lvl">Standard</span></h4>
+      <p>Eine Laterne hat ihre Lampe in L(0|0|6). Eine 1,80 m große Person steht bei (3|0|0), ihr Kopf ist bei K(3|0|1,8). Wie lang ist der Schatten der Person (auf 2 Nachkommastellen)?</p>
+      <div class="check" data-ans="1.29" data-tol="0.01" data-traps="4.29:Das ist der Abstand des Schattenendes zum Laternenfuß. Die Person steht bei x₁ = 3, ziehe diesen Wert ab.|1.43:Das ist der Parameter t. Setze ihn in die Geradengleichung ein."><span>Länge in m:</span><input aria-label="Schattenlänge in Metern"><button class="btn" type="button">Prüfen</button><span class="fb" aria-live="polite"></span></div>
+      <div class="hints">
+        <div class="hint" hidden><b>Tipp 1 · Ansatz</b><p>Lichtgerade durch L und K: Richtungsvektor LK⃗ = (3|0|−4,2).</p></div>
+        <div class="hint" hidden><b>Tipp 2 · Parameter</b><p>6 − 4,2t = 0 ergibt t = 10/7 ≈ 1,43. Das Schattenende liegt bei K′(30/7 | 0 | 0) ≈ (4,29|0|0).</p></div>
+        <div class="hint sol" hidden><b>Lösung</b><p>Schattenlänge = 30/7 − 3 = 9/7 ≈ 1,29 m.</p></div>
+        <button class="btn hint-next" type="button">Tipp 1 zeigen</button>
+      </div>
+    </div>
+
+    <div class="task">
+      <h4>B4 · Deckenlampe über dem Würfel <span class="lvl">Erweitert</span></h4>
+      <p>Eine Lampe hängt bei L(0|0|10). Welcher Schattenpunkt gehört zur Würfelecke Q(2|1|5)? Um welchen Faktor ist der Schatten weiter von der Lotgeraden der Lampe entfernt als Q?</p>
+      <div class="check" data-ans="4,2,0" data-tol="0.01" data-ground="1"><span>Q′(</span><input aria-label="x1"><span>|</span><input aria-label="x2"><span>|</span><input aria-label="x3"><span>)</span><button class="btn" type="button">Prüfen</button><span class="fb" aria-live="polite"></span></div>
+      <div class="hints">
+        <div class="hint" hidden><b>Tipp 1 · Ansatz</b><p>Richtungsvektor LQ⃗ = (2|1|−5).</p></div>
+        <div class="hint" hidden><b>Tipp 2 · Parameter</b><p>10 − 5t = 0 ergibt t = 2.</p></div>
+        <div class="hint sol" hidden><b>Lösung</b><p>Q′(4|2|0). Der Faktor ist t = 2, denn Q liegt auf halber Höhe zwischen Lampe und Boden.</p></div>
+        <button class="btn hint-next" type="button">Tipp 1 zeigen</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" data-speak>
+    <div class="step-label"><span class="tag">Wahlaufgabe</span><h3>Zeig, was du kannst</h3></div>
+    <div class="express">
+      <div><b>Skizzieren</b><span>Zeichne zwei Skizzen nebeneinander: einen Stab im Sonnenlicht und denselben Stab unter einer Lampe. Markiere, was gleich bleibt und was sich ändert.</span></div>
+      <div><b>Erklären</b><span>Erkläre in einer Sprachnachricht oder einem Text, warum der Schatten unter einer Lampe größer ist als das Objekt. Nutze den Parameter t.</span></div>
+      <div><b>Erfinden</b><span>Miss eine Lampe in eurem Klassenraum grob aus und erfinde dazu eine Schattenaufgabe mit Lösung.</span></div>
+    </div>
+  </div>
+
+  <div class="step self" data-self="s2">
+    <div class="step-label"><span class="tag sun">Selbsteinschätzung</span><h3>Wie sicher bist du?</h3><span class="time">3 min</span></div>
+    <div class="self-row"><span>Ich kann den Unterschied zwischen Sonne und Lampe erklären.</span><div class="seg" role="group" aria-label="Einschätzung"><button type="button" data-v="2">sicher</button><button type="button" data-v="1">teilweise</button><button type="button" data-v="0">noch nicht</button></div></div>
+    <div class="self-row"><span>Ich kann den Richtungsvektor von der Lampe zum Objektpunkt bilden.</span><div class="seg" role="group" aria-label="Einschätzung"><button type="button" data-v="2">sicher</button><button type="button" data-v="1">teilweise</button><button type="button" data-v="0">noch nicht</button></div></div>
+    <div class="self-row"><span>Ich kann ein Schattendreieck berechnen.</span><div class="seg" role="group" aria-label="Einschätzung"><button type="button" data-v="2">sicher</button><button type="button" data-v="1">teilweise</button><button type="button" data-v="0">noch nicht</button></div></div>
+    <p class="advice" aria-live="polite" data-tips="Schau dir die Vergleichstabelle Sonne/Lampe noch einmal an und löse B1 mit den Tipps.|Löse noch die zweite Standard-Aufgabe (B2 oder B3) ohne Tipps.|Sehr gut. Weiter mit Station 3 oder probiere B4.">Klicke bei jeder Aussage an, wie sicher du bist. Du bekommst dann eine Empfehlung.</p>
+  </div>
+</section>
+
+<!-- ========== STATION 3 ========== -->
+<section class="station" id="s3">
+  <div class="st-head"><span class="st-num">3</span>
+    <div><h2>Spiegeln und Volumen</h2>
+      <p class="note">Problemlösen in vier Schritten · Buch S. 199–200 (Problem 1), S. 201 Nr. 4, 5a, S. 202 Nr. 8a</p>
+      <div class="goals"><span>Punkte an Koordinatenebenen spiegeln</span><span>Orthogonalität mit dem Skalarprodukt prüfen</span><span>Prismenvolumen berechnen</span></div>
+    </div></div>
+
+  <div class="step" data-speak>
+    <div class="step-label"><span class="tag sun">Einstieg</span><h3>Aus einem Dreieck wird ein Prisma</h3><span class="time">5 min</span></div>
+    <p>Das Dreieck A(3|5|2), B(−1|5|2), C(3|5|5) wird an der x₁x₃-Ebene gespiegelt. Verbindet man jeden Punkt mit seinem Bildpunkt, entsteht ein Körper. Wie groß ist sein Volumen? Nutze den <a href="#werkzeug">Problemlöse-Kompass</a>.</p>
+  </div>
+
+  <div class="step sim">
+    <div class="step-label"><span class="tag">Simulation</span><h3>Spiegelebene wählen</h3><span class="time">8 min</span></div>
+    <canvas id="c3" role="img" aria-describedby="d3" aria-label="Schrägbild eines Dreiecks und seines Spiegelbildes"></canvas>
+    <p class="sim-desc" id="d3" aria-live="polite"></p>
+    <div class="controls">
+      <label for="plane">Spiegelebene
+        <select id="plane"><option value="1">x₁x₃-Ebene (x₂ wechselt Vorzeichen)</option><option value="2">x₁x₂-Ebene (x₃ wechselt Vorzeichen)</option><option value="0">x₂x₃-Ebene (x₁ wechselt Vorzeichen)</option></select></label>
+    </div>
+    <div class="readout" id="r3"></div>
+    <p class="note">Beobachtungsfrage: Bei welcher Spiegelebene entsteht ein gerades Dreiecksprisma? Woran erkennst du das an den Koordinaten des Dreiecks?</p>
+  </div>
+
+  <div class="step" data-speak>
+    <div class="step-label"><span class="tag">Merkwissen</span><h3>Spiegeln an Koordinatenebenen</h3><span class="time">8 min</span></div>
+    <div class="tbl"><table>
+      <thead><tr><th>Spiegelebene</th><th>Regel</th><th>Beispiel P(3|5|2)</th></tr></thead>
+      <tbody>
+        <tr><td>x₁x₂-Ebene</td><td>x₃ wechselt das Vorzeichen</td><td class="min">P′(3|5|−2)</td></tr>
+        <tr><td>x₁x₃-Ebene</td><td>x₂ wechselt das Vorzeichen</td><td class="min">P′(3|−5|2)</td></tr>
+        <tr><td>x₂x₃-Ebene</td><td>x₁ wechselt das Vorzeichen</td><td class="min">P′(−3|5|2)</td></tr>
+      </tbody></table></div>
+    <p class="note">Eselsbrücke: Es wechselt immer die Koordinate, die im Namen der Ebene <b>fehlt</b>.</p>
+    <p>Volumen des Dreiecksprismas: V = ½ · g · h<sub>g</sub> · h<sub>Prisma</sub>. Im Einstieg gilt AB⃗ · AC⃗ = (−4|0|0) · (0|0|3) = 0, das Dreieck ist also rechtwinklig mit g = 3 und h<sub>g</sub> = 4. Die Prismenhöhe ist |AA′⃗| = 10, also V = ½ · 3 · 4 · 10 = 60 VE.</p>
+    <div class="partner"><b>Partner-Check (2 min):</b> Nennt euch gegenseitig einen Punkt und eine Spiegelebene. Die andere Person gibt den Bildpunkt an und begründet mit der Eselsbrücke.</div>
+  </div>
+
+  <div class="step gg">
+    <div class="step-label"><span class="tag">GeoGebra 3D</span><h3>Prisma erzeugen und Volumen kontrollieren</h3><span class="time">7 min</span></div>
+    <pre>A = (3, 5, 2)
+B = (-1, 5, 2)
+C = (3, 5, 5)
+d = Polygon(A, B, C)
+A' = Reflect(A, y = 0)
+k = Prism(d, A')
+Volume(k)</pre>
+    <p>Auftrag: Ersetze <code>y = 0</code> durch <code>z = 0</code> (Spiegelung an der x₁x₂-Ebene). Warum entsteht jetzt kein Prisma, das die Spiegelpunkte verbindet?</p>
+  </div>
+
+  <div class="step">
+    <div class="step-label"><span class="tag">Üben</span><h3>Aufgaben mit Selbst-Check</h3><span class="time">14 min</span></div>
+    <p class="choice"><b>Deine Wahl:</b> Löse C1 (Basis, zu zweit) und C2 <i>oder</i> C3 (Standard). Danach: „Zeig, was du kannst“ oder die weiterführenden Aufgaben.</p>
+
+    <div class="task first">
+      <h4>C1 · Spiegelpunkte zuordnen <span class="lvl">Buch Nr. 4 · Basis, Partnerarbeit</span></h4>
+      <p>Ordne je einen Punkt, seinen Spiegelpunkt und die Spiegelebene zu: A(1|3|5), B(−1|3|5), C(1|−3|5), D(1|3|−5), E(−1|3|−5), F(−1|−3|5), G(1|−3|−5), H(−1|−3|−5).</p>
+      <div class="hints">
+        <div class="hint" hidden><b>Tipp 1 · Ansatz</b><p>Vergleiche zwei Punkte Koordinate für Koordinate. Sie sind Spiegelpunkte, wenn genau eine Koordinate das Vorzeichen wechselt.</p></div>
+        <div class="hint" hidden><b>Tipp 2 · Ebene</b><p>Wechselt x₁, ist es die x₂x₃-Ebene. Wechselt x₂, die x₁x₃-Ebene. Wechselt x₃, die x₁x₂-Ebene.</p></div>
+        <div class="hint sol" hidden><b>Lösung</b><p>A ↔ B (x₂x₃), A ↔ C (x₁x₃), A ↔ D (x₁x₂), B ↔ E (x₁x₂), B ↔ F (x₁x₃), C ↔ G (x₁x₂), C ↔ F (x₂x₃), D ↔ G (x₁x₃), D ↔ E (x₂x₃), E ↔ H (x₁x₃), F ↔ H (x₁x₂), G ↔ H (x₂x₃). Es gibt mehrere richtige Zuordnungen.</p></div>
+        <button class="btn hint-next" type="button">Tipp 1 zeigen</button>
+      </div>
+    </div>
+
+    <div class="task">
+      <h4>C2 · Parallelogramm-Prisma <span class="lvl">Buch Nr. 5a · Standard</span></h4>
+      <p>A(3|2|4), B(3|−2|0), C(3|−4|−5), D(3|0|−1) bilden ein Parallelogramm mit Flächeninhalt 12 FE. Spiegele an der x₂x₃-Ebene und berechne das Volumen des Prismas ABCDA′B′C′D′.</p>
+      <div class="check" data-ans="72" data-tol="0.01" data-traps="36:Du hast den Abstand zur Spiegelebene (3) als Höhe genommen. Die Prismenhöhe ist |AA′| = 6.|6:Das ist die Höhe des Prismas. Multipliziere noch mit der Grundfläche 12 FE.|144:Die Höhe ist 6, nicht 12. Berechne |AA′| noch einmal."><span>V =</span><input aria-label="Volumen"><span>VE</span><button class="btn" type="button">Prüfen</button><span class="fb" aria-live="polite"></span></div>
+      <div class="hints">
+        <div class="hint" hidden><b>Tipp 1 · Ansatz</b><p>An der x₂x₃-Ebene wechselt x₁ das Vorzeichen. Fällt dir an den x₁-Koordinaten von A bis D etwas auf?</p></div>
+        <div class="hint" hidden><b>Tipp 2 · Höhe</b><p>Alle Punkte haben x₁ = 3, das Parallelogramm liegt parallel zur Spiegelebene. Die Prismenhöhe ist |AA′⃗|.</p></div>
+        <div class="hint sol" hidden><b>Lösung</b><p>A′(−3|2|4), B′(−3|−2|0), C′(−3|−4|−5), D′(−3|0|−1). Höhe |(−6|0|0)| = 6, also V = 12 · 6 = 72 VE.</p></div>
+        <button class="btn hint-next" type="button">Tipp 1 zeigen</button>
+      </div>
+    </div>
+
+    <p class="or">oder</p>
+    <div class="task">
+      <h4>C3 · Dreieck spiegeln <span class="lvl">Buch Nr. 8a (Test 1) · Standard</span></h4>
+      <p>Spiegele das Dreieck A(2|4|5), B(4|−1|0), C(−1|0|−2) an der x₁x₂-Ebene. Gib C′ an und erkläre, warum B′ = B gilt.</p>
+      <div class="check" data-ans="-1,0,2" data-tol="0.01" data-traps="1,0,-2:Du hast x₁ gespiegelt. An der x₁x₂-Ebene wechselt x₃ das Vorzeichen.|-1,0,-2:Das ist der Punkt C selbst. Eine Koordinate muss das Vorzeichen wechseln."><span>C′(</span><input aria-label="x1"><span>|</span><input aria-label="x2"><span>|</span><input aria-label="x3"><span>)</span><button class="btn" type="button">Prüfen</button><span class="fb" aria-live="polite"></span></div>
+      <div class="hints">
+        <div class="hint" hidden><b>Tipp 1 · Ansatz</b><p>Welche Koordinate fehlt im Namen „x₁x₂-Ebene“? Genau diese wechselt das Vorzeichen.</p></div>
+        <div class="hint" hidden><b>Tipp 2 · Sonderfall</b><p>B hat x₃ = 0. Wo liegt B also?</p></div>
+        <div class="hint sol" hidden><b>Lösung</b><p>A′(2|4|−5), B′(4|−1|0), C′(−1|0|2). B liegt in der Spiegelebene und bleibt deshalb fest.</p></div>
+        <button class="btn hint-next" type="button">Tipp 1 zeigen</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="step" data-speak>
+    <div class="step-label"><span class="tag">Wahlaufgabe</span><h3>Zeig, was du kannst</h3></div>
+    <div class="express">
+      <div><b>Skizzieren</b><span>Zeichne das Prisma aus dem Einstieg im Schrägbild mit Spiegelebene, Dreieck und Bilddreieck.</span></div>
+      <div><b>Erklären</b><span>Erkläre in einer Sprachnachricht oder einem Text, wie man mit dem Vier-Schritte-Kompass das Volumen im Einstieg findet.</span></div>
+      <div><b>Erfinden</b><span>Erfinde ein Dreieck, das bei Spiegelung an der x₁x₂-Ebene ein gerades Prisma ergibt. Wie müssen seine Koordinaten aussehen?</span></div>
+    </div>
+  </div>
+
+  <div class="step self" data-self="s3">
+    <div class="step-label"><span class="tag sun">Selbsteinschätzung</span><h3>Wie sicher bist du?</h3><span class="time">3 min</span></div>
+    <div class="self-row"><span>Ich kann Punkte an allen drei Koordinatenebenen spiegeln.</span><div class="seg" role="group" aria-label="Einschätzung"><button type="button" data-v="2">sicher</button><button type="button" data-v="1">teilweise</button><button type="button" data-v="0">noch nicht</button></div></div>
+    <div class="self-row"><span>Ich kann mit dem Skalarprodukt prüfen, ob ein Dreieck rechtwinklig ist.</span><div class="seg" role="group" aria-label="Einschätzung"><button type="button" data-v="2">sicher</button><button type="button" data-v="1">teilweise</button><button type="button" data-v="0">noch nicht</button></div></div>
+    <div class="self-row"><span>Ich kann das Volumen eines entstehenden Prismas berechnen.</span><div class="seg" role="group" aria-label="Einschätzung"><button type="button" data-v="2">sicher</button><button type="button" data-v="1">teilweise</button><button type="button" data-v="0">noch nicht</button></div></div>
+    <p class="advice" aria-live="polite" data-tips="Lerne die Eselsbrücke aus dem Merkwissen und löse C1 mit den Tipps zu zweit.|Löse die zweite Standard-Aufgabe (C2 oder C3) ohne Tipps.|Sehr gut. Probiere eine weiterführende Aufgabe oder das Schulhof-Projekt.">Klicke bei jeder Aussage an, wie sicher du bist. Du bekommst dann eine Empfehlung.</p>
+  </div>
+</section>
+
+<!-- ========== WEITERFÜHREND ========== -->
+<section class="station" id="plus">
+  <div class="st-head"><span class="st-num">+</span>
+    <div><h2>Weiterführende Aufgaben</h2>
+      <p class="note">Für schnelle Lerngruppen, Hausaufgabe oder Vertiefung</p></div></div>
+
+  <div class="step" data-speak>
+    <div class="step-label"><span class="tag sun">Projekt</span><h3>Schattenmessung auf dem Schulhof</h3></div>
+    <p>Bestimmt in einer Kleingruppe den echten Sonnenrichtungsvektor und sagt damit einen Schatten vorher.</p>
+    <ol>
+      <li>Stellt einen Stab der Länge h senkrecht auf. Legt ein Koordinatensystem fest: Stabfuß im Ursprung, x₁-Achse z. B. entlang einer Bodenplatte.</li>
+      <li>Messt, wo das Schattenende liegt: (a|b|0). Dann ist v = (a|b|−h) ein Richtungsvektor der Sonnenstrahlen.</li>
+      <li>Messt Höhe und Lage eines größeren Objekts (Basketballkorb, Laternenmast) und berechnet seinen Schattenpunkt.</li>
+      <li>Prüft die Vorhersage durch Nachmessen. Woher kommen Abweichungen? Denkt auch daran, dass die Sonne weiterwandert.</li>
+    </ol>
+  </div>
+
+  <div class="step">
+    <div class="task first">
+      <h4>D1 · Lochkamera <span class="lvl">Buch Nr. 6 · Transfer</span></h4>
+      <p>Der Punkt P(4|0|1) wird durch das Loch L(3|4|2) auf die Bildebene E: x⃗ = (0|4|1) + s·(2|1|3) + t·(1|1|0) abgebildet. Beschreibe das Verfahren und berechne den Bildpunkt P′.</p>
+      <div class="check" data-ans="2.5,6,2.5" data-tol="0.01"><span>P′(</span><input aria-label="x1"><span>|</span><input aria-label="x2"><span>|</span><input aria-label="x3"><span>)</span><button class="btn" type="button">Prüfen</button><span class="fb" aria-live="polite"></span></div>
+      <div class="hints">
+        <div class="hint" hidden><b>Tipp 1 · Ansatz</b><p>Gerade durch P und L: x⃗ = (4|0|1) + r · (−1|4|1). Setze sie mit der Ebenengleichung gleich.</p></div>
+        <div class="hint" hidden><b>Tipp 2 · LGS</b><p>Die dritte Zeile 1 + r = 1 + 3s liefert r = 3s. Setze das in die anderen Zeilen ein.</p></div>
+        <div class="hint sol" hidden><b>Lösung</b><p>s = 0,5; t = 1,5; r = 1,5, also P′(2,5 | 6 | 2,5).</p></div>
+        <button class="btn hint-next" type="button">Tipp 1 zeigen</button>
+      </div>
+    </div>
+    <div class="task">
+      <h4>D2 · Cam Carpet im Stadion <span class="lvl">Buch Nr. 13a · Modellieren</span></h4>
+      <p>Der senkrecht stehende Buchstabe „L“ hat die Ecken L₁(0|0|6), L₂(0|0|0), L₃(4|0|0), L₄(4|0|1), L₅(1|0|1), L₆(1|0|6). Die Kamera hängt in K(24|−24|30). Berechne die Bodenbilder aller Ecken (die Kamera wirkt wie eine Lampe) und skizziere den Teppich. Gib L₁′ an.</p>
+      <div class="check" data-ans="-6,6,0" data-tol="0.01" data-ground="1"><span>L₁′(</span><input aria-label="x1"><span>|</span><input aria-label="x2"><span>|</span><input aria-label="x3"><span>)</span><button class="btn" type="button">Prüfen</button><span class="fb" aria-live="polite"></span></div>
+      <div class="hints">
+        <div class="hint" hidden><b>Tipp 1 · Ansatz</b><p>Die Kamera spielt die Rolle der Lampe. Richtungsvektor von K nach L₁: (−24|24|−24).</p></div>
+        <div class="hint" hidden><b>Tipp 2 · Parameter</b><p>30 − 24t = 0 ergibt t = 1,25. Für Punkte mit Höhe 1 gilt t = 30/29.</p></div>
+        <div class="hint sol" hidden><b>Lösung</b><p>L₁′(−6|6|0), L₂′ = L₂, L₃′ = L₃, L₄′ ≈ (3,31|0,83|0), L₅′ ≈ (0,21|0,83|0), L₆′(−4,75|6|0).</p></div>
+        <button class="btn hint-next" type="button">Tipp 1 zeigen</button>
+      </div>
+    </div>
+    <div class="task">
+      <h4>D3 · Mast auf schiefer Ebene <span class="lvl">Buch Nr. 10 · Profi</span></h4>
+      <p>E: x⃗ = (1|−1|2) + r·(1|−1|−2) + s·(−2|3|2), Mast von F(0,5|0,5|1) bis S(0,5|0,5|6), Sonnenrichtung (−1|5|−16). Berechne die Schattenlänge auf der Ebene (2 Nachkommastellen).</p>
+      <div class="check" data-ans="3.94" data-tol="0.01"><span>Länge:</span><input aria-label="Schattenlänge"><span>LE</span><button class="btn" type="button">Prüfen</button><span class="fb" aria-live="polite"></span></div>
+      <div class="hints">
+        <div class="hint" hidden><b>Tipp 1 · Ansatz</b><p>Der Schatten fällt nicht auf den Boden, sondern auf E. Schneide die Lichtgerade durch S mit E (Gleichsetzen und LGS lösen).</p></div>
+        <div class="hint" hidden><b>Tipp 2 · Abkürzung</b><p>E lässt sich auch als 4x₁ + 2x₂ + x₃ = 4 schreiben. Setzt man die Lichtgerade ein, erhält man 9 − 10t = 4.</p></div>
+        <div class="hint sol" hidden><b>Lösung</b><p>t = 0,5, S′(0|3|−2). FS′⃗ = (−0,5|2,5|−3), Länge √15,5 ≈ 3,94 LE. Der Winkel zwischen Schatten und Mast beträgt etwa 139,6°.</p></div>
+        <button class="btn hint-next" type="button">Tipp 1 zeigen</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== LEHRKRAFT ========== -->
+<section class="station teacher" id="lehrkraft">
+  <div class="st-head"><span class="st-num">L</span>
+    <div><h2>Für die Lehrkraft</h2>
+      <p class="note">Curriculare Einordnung, UDL-Bezug und Verlaufsplanung</p></div></div>
+  <div class="step">
+    <h3>Einordnung im schulinternen Lehrplan</h3>
+    <p>Unterrichtsvorhaben „Geraden und Skalarprodukt (Bewegungen und Schattenwurf)“ und „Ebenen als Lösungsmengen linearer Gleichungen (Untersuchung geometrischer Objekte)“ (GK Q1-IV/V, LK Q1-V/VI). Der Lehrplan empfiehlt ausdrücklich Schattenwürfe in Parallel- und Zentralprojektion, die Variation der Lichtquelle mit DGS und das Problemlösen durch Zerlegen in Teilprobleme.</p>
+    <div class="cols">
+      <div><b>Inhaltsbezogen</b><ul><li>Geraden in Parameterform darstellen und Parameter im Kontext deuten</li><li>Schnittpunkte mit Grundebenen berechnen</li><li>Skalarprodukt als Orthogonalitätsindikator</li></ul></div>
+      <div><b>Prozessbezogen</b><ul><li>Modellieren: Annahmen treffen (parallele Strahlen, punktförmige Quelle)</li><li>Problemlösen: Zerlegen in Teilprobleme, Lösungsplan ausführen</li><li>Werkzeuge: DGS zur Darstellung von Objekten im Raum</li></ul></div>
+    </div>
+  </div>
+
+  <div class="step">
+    <h3>Universal Design for Learning im Lernpfad</h3>
+    <div class="tbl"><table>
+      <thead><tr><th>UDL-Prinzip</th><th>Umsetzung</th></tr></thead>
+      <tbody>
+        <tr><td><b>Repräsentation</b><br><span class="note">das Was</span></td><td>Simulation, Vektorgleichung, Text und GeoGebra-Modell für denselben Inhalt; Live-Kopplung von Bild und Rechnung; Glossar; Textbeschreibung jeder Grafik für Screenreader; Vorlesefunktion für Merkwissen und Aufträge; Eselsbrücke zu den Spiegelregeln.</td></tr>
+        <tr><td><b>Handlung &amp; Ausdruck</b><br><span class="note">das Wie</span></td><td>Gestufte Hilfen (Ansatz, Parameter, Lösung); gezielte Rückmeldung bei typischen Fehlern (t = 1, Vorzeichen, falsche Koordinate, x₃ ≠ 0); Problemlöse-Kompass für alle Stationen; Wahl der Ausdrucksform (Skizze, Sprachnachricht/Text, eigene Aufgabe); Bedienung vollständig per Tastatur.</td></tr>
+        <tr><td><b>Engagement</b><br><span class="note">das Warum</span></td><td>Lernziele zu Beginn; Wahlaufgaben auf gleichem Niveau; vier Anforderungsstufen; reale Kontexte (Maibaum, Fernsehturm, Laterne, Stadion); Schulhof-Projekt mit eigener Messung; Partner-Checks in jeder Station; Selbsteinschätzung mit Empfehlung für den nächsten Schritt.</td></tr>
+      </tbody></table></div>
+    <p class="note">Bewusst nicht enthalten: Erklärvideos. Sie lassen sich an den Merkwissen-Stellen als &lt;video&gt; oder Link ergänzen.</p>
+  </div>
+
+  <div class="step">
+    <h3>Verlaufsplan je Stunde</h3>
+    <div class="tbl"><table>
+      <thead><tr><th>Zeit</th><th>Phase</th><th>Stunde 1 · Sonne</th><th>Stunde 2 · Lampe</th><th>Stunde 3 · Spiegeln</th></tr></thead>
+      <tbody>
+        <tr><td class="min">0–5</td><td>Einstieg</td><td>Pyramidenbild S. 199, Vermutung zu S′</td><td>Vergleich Sonne / Lampe, Beispiel S. 200</td><td>Problem 1 mit Problemlöse-Kompass</td></tr>
+        <tr><td class="min">5–13</td><td>Erkunden</td><td>Simulation Sonnenrichtung</td><td>Simulation Lampenposition</td><td>Simulation Spiegelebene</td></tr>
+        <tr><td class="min">13–21</td><td>Sicherung</td><td>Merkwissen, Partner-Check</td><td>Merkwissen, Partner-Check</td><td>Spiegelregeln, Partner-Check</td></tr>
+        <tr><td class="min">21–28</td><td>Werkzeug</td><td>GeoGebra-Auftrag 1</td><td>GeoGebra-Auftrag 2</td><td>GeoGebra-Auftrag 3</td></tr>
+        <tr><td class="min">28–42</td><td>Üben</td><td>Wahl A1/A2, A3/A4, ggf. A5 oder Ausdrucksform</td><td>B1, Wahl B2/B3, ggf. B4</td><td>C1, Wahl C2/C3, ggf. D-Aufgaben</td></tr>
+        <tr><td class="min">42–45</td><td>Reflexion</td><td>Selbsteinschätzung</td><td>Selbsteinschätzung</td><td>Selbsteinschätzung</td></tr>
+      </tbody></table></div>
+    <p class="note">Hausaufgabe nach Stunde 3: Test 1 (Buch Nr. 7, 8) mit Lösungen S. 372, alternativ das Schulhof-Projekt. Die Selbsteinschätzungen werden nur im Browser der Schülerin bzw. des Schülers gespeichert.</p>
+  </div>
+</section>
+</div>
+
+<script>
+(function(){
+const K=0.3536;
+function css(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim();}
+function proj(p){return [p[1]-K*p[0], -(p[2]-K*p[0])];}
+const fmt=x=>{const r=Math.round(x*100)/100;return (Object.is(r,-0)?0:r).toString().replace('.',',').replace('-','−');};
+const P=p=>'('+p.map(fmt).join(' | ')+')';
+
+function draw(cv,prims,ext){
+  const dpr=window.devicePixelRatio||1,W=cv.clientWidth,H=cv.clientHeight;
+  cv.width=W*dpr;cv.height=H*dpr;const c=cv.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,W,H);
+  const ax=[[-ext[0],0,0],[ext[1],0,0],[0,-ext[2],0],[0,ext[3],0],[0,0,-ext[4]],[0,0,ext[5]]];
+  let pts=ax.slice();prims.forEach(o=>{(o.pts||[o.a,o.b,o.p].filter(Boolean)).forEach(q=>pts.push(q));});
+  const s2=pts.map(proj);let x0=Math.min(...s2.map(q=>q[0])),x1=Math.max(...s2.map(q=>q[0])),y0=Math.min(...s2.map(q=>q[1])),y1=Math.max(...s2.map(q=>q[1]));
+  const m=28,sc=Math.min((W-2*m)/(x1-x0||1),(H-2*m)/(y1-y0||1));
+  const ox=m+(W-2*m-(x1-x0)*sc)/2-x0*sc, oy=m+(H-2*m-(y1-y0)*sc)/2-y0*sc;
+  const S=p=>{const q=proj(p);return [ox+q[0]*sc,oy+q[1]*sc];};
+  const ink=css('--ink'),mut=css('--muted');
+  c.font='12px "JetBrains Mono", monospace';c.lineWidth=1;
+  [[0,'x₁'],[1,'x₂'],[2,'x₃']].forEach(([i,lab])=>{
+    const a=[0,0,0],b=[0,0,0];a[i]=-ext[2*i];b[i]=ext[2*i+1];
+    const A=S(a),B=S(b);c.strokeStyle=mut;c.beginPath();c.moveTo(...A);c.lineTo(...B);c.stroke();
+    const ang=Math.atan2(B[1]-A[1],B[0]-A[0]);c.beginPath();c.moveTo(...B);c.lineTo(B[0]-8*Math.cos(ang-0.4),B[1]-8*Math.sin(ang-0.4));c.lineTo(B[0]-8*Math.cos(ang+0.4),B[1]-8*Math.sin(ang+0.4));c.closePath();c.fillStyle=mut;c.fill();
+    c.fillText(lab,B[0]+5,B[1]-5);
+    const step=sc<14?(sc<6?10:5):(sc<28?2:1);
+    for(let k=-Math.floor(ext[2*i]/step)*step;k<=ext[2*i+1];k+=step){if(!k)continue;const q=[0,0,0];q[i]=k;const Q=S(q);c.beginPath();c.moveTo(Q[0]-3,Q[1]);c.lineTo(Q[0]+3,Q[1]);c.stroke();c.fillStyle=mut;c.fillText(String(k).replace('-','−'),Q[0]+4,Q[1]+12);}
+  });
+  prims.forEach(o=>{
+    if(o.t==='poly'){c.beginPath();o.pts.forEach((q,i)=>{const Q=S(q);i?c.lineTo(...Q):c.moveTo(...Q);});c.closePath();if(o.fill){c.fillStyle=o.fill;c.fill();}if(o.stroke){c.strokeStyle=o.stroke;c.lineWidth=o.w||1.5;c.setLineDash(o.dash||[]);c.stroke();c.setLineDash([]);c.lineWidth=1;}}
+    if(o.t==='line'){c.strokeStyle=o.color;c.lineWidth=o.w||1.2;c.setLineDash(o.dash||[]);c.beginPath();c.moveTo(...S(o.a));c.lineTo(...S(o.b));c.stroke();c.setLineDash([]);c.lineWidth=1;}
+    if(o.t==='pt'){const Q=S(o.p);c.fillStyle=o.color;c.beginPath();c.arc(Q[0],Q[1],o.r||3.5,0,7);c.fill();if(o.label){c.fillStyle=ink;c.font='600 12px "JetBrains Mono", monospace';c.fillText(o.label,Q[0]+6,Q[1]-6);c.font='12px "JetBrains Mono", monospace';}}
+  });
+}
+function hull(pts){const p=pts.slice().sort((a,b)=>a[0]-b[0]||a[1]-b[1]);const cr=(o,a,b)=>(a[0]-o[0])*(b[1]-o[1])-(a[1]-o[1])*(b[0]-o[0]);const lo=[],up=[];
+  for(const q of p){while(lo.length>1&&cr(lo[lo.length-2],lo[lo.length-1],q)<=0)lo.pop();lo.push(q);}
+  for(const q of p.slice().reverse()){while(up.length>1&&cr(up[up.length-2],up[up.length-1],q)<=0)up.pop();up.push(q);}
+  return lo.slice(0,-1).concat(up.slice(0,-1));}
+function extOf(points,pad){const e=[3,3,3,3,1,3];points.forEach(p=>{e[0]=Math.max(e[0],-p[0]+pad);e[1]=Math.max(e[1],p[0]+pad);e[2]=Math.max(e[2],-p[1]+pad);e[3]=Math.max(e[3],p[1]+pad);e[4]=Math.max(e[4],-p[2]+pad);e[5]=Math.max(e[5],p[2]+pad);});return e;}
+const $=id=>document.getElementById(id);
+const bind=(ids,fn)=>ids.forEach(i=>$(i).addEventListener('input',()=>{const o=$('o-'+i);if(o)o.textContent=fmt(+$(i).value);fn();}));
+
+// Station 1
+const base=[[2,0,0],[0,2,0],[-2,0,0],[0,-2,0]],Sp=[0,0,4];
+function s1(){const v=[+$('v1').value,+$('v2').value,+$('v3').value];const t=-Sp[2]/v[2];const Ss=Sp.map((x,i)=>x+t*v[i]);
+  const h=hull(base.concat([Ss]).map(p=>[p[0],p[1]])).map(q=>[q[0],q[1],0]);
+  const sun=css('--sun');const len=Math.hypot(Ss[0],Ss[1]);
+  draw($('c1'),[
+    {t:'poly',pts:h,fill:css('--shadow-fill'),stroke:css('--shadow')},
+    {t:'poly',pts:base,stroke:sun,w:1.4},
+    ...base.map(b=>({t:'line',a:b,b:Sp,color:sun,w:1.6})),
+    {t:'line',a:Sp,b:Ss,color:sun,dash:[5,4]},
+    {t:'pt',p:Sp,color:sun,label:'S'},{t:'pt',p:Ss,color:css('--shadow'),label:"S'"}],extOf([Ss,Sp],1.5));
+  $('r1').textContent='g: x = (0|0|4) + t·'+P(v)+'\n4 + t·('+fmt(v[2])+') = 0  ⇒  t = '+fmt(t)+'\nS\' = '+P(Ss)+'      Schattenlänge der Höhe: '+fmt(len)+' LE';
+  $('d1').innerHTML='<b>Was die Grafik zeigt:</b> Eine Pyramide mit quadratischer Grundfläche um den Ursprung und Spitze S(0|0|4). Die Sonne scheint in Richtung '+P(v)+'. Der gestrichelte Lichtstrahl durch S trifft den Boden in S′'+P(Ss)+'. Der graue Schatten reicht '+fmt(len)+' Längeneinheiten weit vom Fußpunkt der Spitze.';}
+bind(['v1','v2','v3'],s1);
+
+// Station 2
+const T=[[4,2,3],[4,4,3],[5,3,4]],names=['A','B','C'];
+function s2(){const L=[+$('l1').value,+$('l2').value,+$('l3').value];const sun=css('--sun'),sh=css('--shadow');
+  const Ts=T.map(p=>{const t=L[2]/(L[2]-p[2]);return {t,q:L.map((x,i)=>x+t*(p[i]-x))};});
+  draw($('c2'),[
+    {t:'poly',pts:Ts.map(o=>o.q),fill:css('--shadow-fill'),stroke:sh},
+    ...Ts.map(o=>({t:'line',a:L,b:o.q,color:sun,dash:[5,4]})),
+    {t:'poly',pts:T,fill:css('--sun-soft'),stroke:sun,w:2},
+    {t:'pt',p:L,color:sun,label:'L',r:5},
+    ...T.map((p,i)=>({t:'pt',p,color:sun,label:names[i]})),
+    ...Ts.map((o,i)=>({t:'pt',p:o.q,color:sh,label:names[i]+"'"}))],extOf(Ts.map(o=>o.q).concat([L]),1));
+  const area=pts=>{const u=pts[1].map((x,i)=>x-pts[0][i]),w=pts[2].map((x,i)=>x-pts[0][i]);return 0.5*Math.hypot(u[1]*w[2]-u[2]*w[1],u[2]*w[0]-u[0]*w[2],u[0]*w[1]-u[1]*w[0]);};
+  const a0=area(T),a1=area(Ts.map(o=>o.q));
+  $('r2').textContent=Ts.map((o,i)=>names[i]+"' = "+P(o.q)+'   (t = '+fmt(o.t)+')').join('\n')+'\nFläche Dreieck: '+fmt(a0)+' FE   Fläche Schatten: '+fmt(a1)+' FE';
+  $('d2').innerHTML='<b>Was die Grafik zeigt:</b> Die Lampe L'+P(L)+' beleuchtet das gelbe Dreieck ABC. Drei gestrichelte Strahlen gehen von L durch die Ecken bis zum Boden. Das graue Schattendreieck hat die Ecken '+Ts.map((o,i)=>names[i]+'′'+P(o.q)).join(', ')+'. Es ist etwa '+fmt(a1/a0)+'-mal so groß wie das Dreieck.';}
+bind(['l1','l2','l3'],s2);
+
+// Station 3
+const D=[[3,5,2],[-1,5,2],[3,5,5]];const pn=['x₂x₃-Ebene','x₁x₃-Ebene','x₁x₂-Ebene'];
+function s3(){const k=+$('plane').value;const M=D.map(p=>p.map((x,i)=>i===k?-x:x));const mir=css('--mirror'),sun=css('--sun');
+  const r=6,pl=[[-r,-r],[-r,r],[r,r],[r,-r]].map(([a,b])=>{const q=[0,0,0];const o=[0,1,2].filter(i=>i!==k);q[o[0]]=a;q[o[1]]=b;return q;});
+  draw($('c3'),[
+    {t:'poly',pts:pl,fill:css('--mirror-soft'),stroke:mir,w:1,dash:[3,3]},
+    ...D.map((p,i)=>({t:'line',a:p,b:M[i],color:css('--muted'),dash:[4,3]})),
+    {t:'poly',pts:D,fill:css('--sun-soft'),stroke:sun,w:2},
+    {t:'poly',pts:M,fill:css('--mirror-soft'),stroke:mir,w:2},
+    ...D.map((p,i)=>({t:'pt',p,color:sun,label:names[i]})),
+    ...M.map((p,i)=>({t:'pt',p,color:mir,label:names[i]+"'"}))],extOf(D.concat(M),1));
+  const par=D.every(p=>p[k]===D[0][k]);const hgt=2*Math.abs(D[0][k]);
+  $('r3').textContent=M.map((p,i)=>names[i]+"' = "+P(p)).join('\n')+'\n'+(par?'Dreieck liegt parallel zur Spiegelebene ⇒ gerades Prisma\nh = |AA\'| = '+fmt(hgt)+'   V = ½ · 3 · 4 · '+fmt(hgt)+' = '+fmt(6*hgt)+' VE':'Dreieck liegt nicht parallel zur Spiegelebene ⇒ kein gerades Prisma');
+  $('d3').innerHTML='<b>Was die Grafik zeigt:</b> Das gelbe Dreieck ABC und sein blaues Spiegelbild an der '+pn[k]+' (blau gestrichelte Fläche). Graue Linien verbinden jeden Punkt mit seinem Bildpunkt: '+M.map((p,i)=>names[i]+'′'+P(p)).join(', ')+'. '+(par?'Die beiden Dreiecke sind parallel, zusammen bilden sie ein gerades Prisma.':'Die Dreiecke stehen schräg zueinander, es entsteht kein gerades Prisma.');}
+$('plane').addEventListener('change',s3);
+
+function all(){s1();s2();s3();}
+all();addEventListener('resize',all);
+try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',all);}catch(e){}
+new MutationObserver(all).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+
+// Selbst-Check mit gezielter Rückmeldung
+const near=(a,b,tol)=>a.length===b.length&&a.every((v,i)=>Math.abs(v-b[i])<=tol);
+document.querySelectorAll('.check').forEach(box=>{
+  const ans=box.dataset.ans.split(',').map(Number),tol=+box.dataset.tol,ins=[...box.querySelectorAll('input')],fb=box.querySelector('.fb');
+  const traps=(box.dataset.traps||'').split('|').filter(Boolean).map(s=>{const i=s.indexOf(':');return {v:s.slice(0,i).split(',').map(Number),msg:s.slice(i+1)};});
+  ins.forEach((inp,i)=>{inp.id='chk-'+Math.random().toString(36).slice(2,8);inp.setAttribute('inputmode','decimal');inp.addEventListener('keydown',e=>{if(e.key==='Enter')box.querySelector('button').click();});});
+  box.querySelector('button').addEventListener('click',()=>{
+    const vals=ins.map(i=>parseFloat(i.value.trim().replace(',','.').replace('−','-')));
+    const set=(cls,msg)=>{fb.className='fb '+cls;fb.textContent=msg;};
+    if(vals.some(isNaN))return set('warn','Bitte alle Felder ausfüllen. Dezimalzahlen mit Komma oder Punkt.');
+    if(near(vals,ans,tol))return set('ok','Richtig. Gut gemacht.');
+    const tr=traps.find(t=>near(vals,t.v,Math.max(tol,0.01)));
+    if(tr)return set('bad',tr.msg);
+    if(box.dataset.ground&&Math.abs(vals[vals.length-1])>tol)return set('bad','Ein Schattenpunkt auf dem Boden hat immer x₃ = 0. Prüfe, ob du t aus der dritten Koordinate bestimmt hast.');
+    if(near(vals.map(Math.abs),ans.map(Math.abs),tol))return set('bad','Die Beträge stimmen. Prüfe die Vorzeichen, vor allem beim Richtungsvektor.');
+    set('bad','Noch nicht. Hol dir Tipp 1 und vergleiche mit deinem Ansatz.');});
+});
+
+// Gestufte Hilfen
+document.querySelectorAll('.hints').forEach(h=>{
+  const steps=[...h.querySelectorAll('.hint')],btn=h.querySelector('.hint-next');let n=0;
+  const label=()=>{const nx=steps[n];if(!nx){btn.hidden=true;return;}btn.textContent=nx.classList.contains('sol')?'Lösung zeigen':'Tipp '+(n+1)+' zeigen';};
+  label();btn.addEventListener('click',()=>{steps[n].hidden=false;n++;label();});
+});
+
+// Vorlesen
+const synth=('speechSynthesis' in window)?window.speechSynthesis:null;
+document.querySelectorAll('[data-speak]').forEach(sec=>{
+  if(!synth)return;
+  const lab=sec.querySelector('.step-label');const b=document.createElement('button');
+  b.type='button';b.className='btn speak';b.textContent='Vorlesen';b.setAttribute('aria-label','Abschnitt vorlesen');
+  lab.appendChild(b);
+  b.addEventListener('click',()=>{
+    try{
+      if(b.dataset.on){synth.cancel();return;}
+      synth.cancel();document.querySelectorAll('.speak').forEach(x=>{x.textContent='Vorlesen';delete x.dataset.on;});
+      const clone=sec.cloneNode(true);clone.querySelectorAll('button,.time,.tag').forEach(x=>x.remove());
+      let txt=clone.innerText.replace(/x₁/g,'x 1').replace(/x₂/g,'x 2').replace(/x₃/g,'x 3').replace(/\|/g,' , ').replace(/′/g,' Strich').replace(/−/g,' minus ').replace(/⇒/g,', also ');
+      const u=new SpeechSynthesisUtterance(txt);u.lang='de-DE';u.rate=0.95;
+      u.onend=u.onerror=()=>{b.textContent='Vorlesen';delete b.dataset.on;};
+      b.textContent='Stopp';b.dataset.on='1';synth.speak(u);
+    }catch(e){b.textContent='Vorlesen nicht verfügbar';b.disabled=true;}
+  });
+});
+
+// Selbsteinschätzung
+let store={};try{store=JSON.parse(localStorage.getItem('lsp-self')||'{}');}catch(e){}
+document.querySelectorAll('[data-self]').forEach(box=>{
+  const key=box.dataset.self,rows=[...box.querySelectorAll('.seg')],adv=box.querySelector('.advice'),tips=adv.dataset.tips.split('|');
+  const vals=store[key]||[];
+  const update=()=>{
+    rows.forEach((r,i)=>r.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(vals[i]!==undefined&&+b.dataset.v===vals[i]))));
+    if(vals.filter(v=>v!==undefined).length<rows.length)return;
+    const m=Math.min(...vals);adv.innerHTML='<b>Empfehlung:</b> '+tips[m];
+  };
+  rows.forEach((r,i)=>r.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{vals[i]=+b.dataset.v;store[key]=vals;try{localStorage.setItem('lsp-self',JSON.stringify(store));}catch(e){}update();})));
+  update();
+});
+
+// GeoGebra-Applets direkt auf der Seite (lädt erst auf Klick)
+let ggbLoading=null;
+function loadGGB(){if(window.GGBApplet)return Promise.resolve();if(ggbLoading)return ggbLoading;
+  ggbLoading=new Promise((res,rej)=>{const sc=document.createElement('script');sc.src='https://www.geogebra.org/apps/deployggb.js';sc.onload=res;sc.onerror=rej;document.head.appendChild(sc);});return ggbLoading;}
+document.querySelectorAll('.gg').forEach((box,idx)=>{
+  const pre=box.querySelector('pre');if(!pre)return;
+  const cmds=pre.textContent.split('\n').map(l=>l.trim()).filter(Boolean);
+  const btn=document.createElement('button');btn.type='button';btn.className='btn';btn.textContent='GeoGebra hier öffnen (Befehle sind schon eingegeben)';
+  const host=document.createElement('div');host.className='ggb-host';host.id='ggb'+idx;
+  pre.after(btn,host);
+  btn.addEventListener('click',()=>{btn.disabled=true;btn.textContent='GeoGebra wird geladen …';
+    loadGGB().then(()=>{
+      const w=host.clientWidth||600;
+      const app=new GGBApplet({appName:'3d',width:w,height:Math.max(380,Math.round(w*0.65)),showToolBar:false,showAlgebraInput:true,showMenuBar:false,showResetIcon:true,enableShiftDragZoom:true,language:'de',
+        appletOnLoad:function(api){cmds.forEach(c=>{try{api.evalCommand(c);}catch(e){}});}},true);
+      app.inject(host.id);btn.hidden=true;
+    }).catch(()=>{btn.disabled=false;btn.textContent='GeoGebra konnte nicht geladen werden. Bitte die Befehle oben auf geogebra.org/3d eingeben.';});
+  });
+});
+})();
+</script>
+
+</body>
+</html>
