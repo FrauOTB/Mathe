@@ -94,9 +94,9 @@ const KARTEN = {
             text:"Platzhalter für einen Lernpfad der Sekundarstufe I.", tags:["Algebra"]}
 };
 const FARBE = {"Mathematik":"var(--mathe)","Physik":"var(--physik)","Informatik":"var(--info)"};
-const OWNER="FrauOTB", REPO="Q2";
+const OWNER="FrauOTB", REPO="Mathe";
 const onPages = /github\.io$/.test(location.hostname);
-const base = onPages ? "" : "https://frauotb.github.io/Q2/";
+const base = onPages ? "" : "https://frauotb.github.io/Mathe/";
 const IGNORE = new Set([".github","assets","node_modules"]);
 
 let cards = Object.entries(KARTEN).map(([ordner,k])=>({ordner,...k}));
