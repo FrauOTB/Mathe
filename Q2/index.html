@@ -62,6 +62,11 @@ li+li{margin-top:4px}
 .vec{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;border-left:1.5px solid currentColor;border-right:1.5px solid currentColor;border-radius:6px;padding:0 5px;font:.85em/1.15 var(--f-mono);margin:0 2px}
 .formula{font-family:var(--f-mono);font-size:.95rem;background:var(--paper);border-radius:4px;padding:12px 14px;overflow-x:auto;line-height:2}
 .sim canvas{width:100%;height:360px;display:block;background:var(--paper);border-radius:4px;border:1px solid var(--line)}
+canvas.rot{cursor:grab;touch-action:none}
+canvas.rot:active{cursor:grabbing}
+canvas.rot:focus-visible{outline:2px solid var(--sun);outline-offset:2px}
+.rot-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.rot-bar .note{flex:1 1 220px}
 .sim-desc{font-size:.92rem;border-left:3px solid var(--mirror);padding-left:10px;color:var(--muted)}
 .sim-desc b{color:var(--ink)}
 .controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px 18px}
@@ -473,14 +478,16 @@ Area(s)</pre>
 
   <div class="step sim">
     <div class="step-label"><span class="tag">Simulation</span><h3>Spiegelebene wählen</h3></div>
-    <canvas id="c3" role="img" aria-describedby="d3" aria-label="Schrägbild eines Dreiecks und seines Spiegelbildes"></canvas>
+    <canvas id="c3" class="rot" tabindex="0" role="img" aria-describedby="d3" aria-label="Drehbares 3D-Bild eines Dreiecks und seines Spiegelbildes. Mit den Pfeiltasten drehen."></canvas>
+    <div class="rot-bar"><span class="note">Ziehe mit Maus oder Finger, um das Bild zu drehen (oder Pfeiltasten).</span><button class="btn" type="button" id="view-reset">Ansicht zurücksetzen</button><button class="btn" type="button" id="view-top">Blick senkrecht auf die Spiegelebene</button></div>
     <p class="sim-desc" id="d3" aria-live="polite"></p>
     <div class="controls">
       <label for="plane">Spiegelebene
         <select id="plane"><option value="1">x₁x₃-Ebene (x₂ wechselt Vorzeichen)</option><option value="2">x₁x₂-Ebene (x₃ wechselt Vorzeichen)</option><option value="0">x₂x₃-Ebene (x₁ wechselt Vorzeichen)</option></select></label>
+      <label for="dist">Abstand d des Punktes A zur Spiegelebene <output id="o-dist">5</output><input type="range" id="dist" min="0" max="8" step="0.5" value="5"></label>
     </div>
     <div class="readout" id="r3"></div>
-    <p class="note">Beobachtungsfrage: Bei welcher Spiegelebene entsteht ein gerades Dreiecksprisma? Woran erkennst du das an den Koordinaten des Dreiecks?</p>
+    <p class="note">Beobachtungsfragen: Bei welcher Spiegelebene entsteht ein gerades Dreiecksprisma? Woran erkennst du das an den Koordinaten des Dreiecks? Verändere den Abstand d: Wie hängen die Prismenhöhe und das Volumen von d ab? Was passiert bei d = 0?</p>
   </div>
 
   <div class="step" data-speak>
@@ -634,15 +641,24 @@ const fmt=x=>{const r=Math.round(x*100)/100;return (Object.is(r,-0)?0:r).toStrin
 const P=p=>'('+p.map(fmt).join(' | ')+')';
 const Vh=p=>'<span class="vec">'+p.map(x=>'<span>'+fmt(x)+'</span>').join('')+'</span>';
 
-function draw(cv,prims,ext){
+function rotProj(view){const ca=Math.cos(view.yaw),sa=Math.sin(view.yaw),cp=Math.cos(view.pitch),sp=Math.sin(view.pitch);
+  return p=>{const u=-p[0]*sa+p[1]*ca,w=p[0]*ca+p[1]*sa;return [u,-(p[2]*cp-w*sp)];};}
+function draw(cv,prims,ext,view){
   const dpr=window.devicePixelRatio||1,W=cv.clientWidth,H=cv.clientHeight;
   cv.width=W*dpr;cv.height=H*dpr;const c=cv.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,W,H);
   const ax=[[-ext[0],0,0],[ext[1],0,0],[0,-ext[2],0],[0,ext[3],0],[0,0,-ext[4]],[0,0,ext[5]]];
-  let pts=ax.slice();prims.forEach(o=>{(o.pts||[o.a,o.b,o.p].filter(Boolean)).forEach(q=>pts.push(q));});
-  const s2=pts.map(proj);let x0=Math.min(...s2.map(q=>q[0])),x1=Math.max(...s2.map(q=>q[0])),y0=Math.min(...s2.map(q=>q[1])),y1=Math.max(...s2.map(q=>q[1]));
-  const m=28,sc=Math.min((W-2*m)/(x1-x0||1),(H-2*m)/(y1-y0||1));
-  const ox=m+(W-2*m-(x1-x0)*sc)/2-x0*sc, oy=m+(H-2*m-(y1-y0)*sc)/2-y0*sc;
-  const S=p=>{const q=proj(p);return [ox+q[0]*sc,oy+q[1]*sc];};
+  const pr=view?rotProj(view):proj;const m=28;let sc,ox,oy;
+  if(view){
+    const ctr=[(ext[1]-ext[0])/2,(ext[3]-ext[2])/2,(ext[5]-ext[4])/2];
+    const R=Math.hypot((ext[0]+ext[1])/2,(ext[2]+ext[3])/2,(ext[4]+ext[5])/2)||1;
+    sc=(Math.min(W,H)/2-m)/R*1.55;const q=pr(ctr);ox=W/2-q[0]*sc;oy=H/2-q[1]*sc;
+  }else{
+    let pts=ax.slice();prims.forEach(o=>{(o.pts||[o.a,o.b,o.p].filter(Boolean)).forEach(q=>pts.push(q));});
+    const s2=pts.map(pr);let x0=Math.min(...s2.map(q=>q[0])),x1=Math.max(...s2.map(q=>q[0])),y0=Math.min(...s2.map(q=>q[1])),y1=Math.max(...s2.map(q=>q[1]));
+    sc=Math.min((W-2*m)/(x1-x0||1),(H-2*m)/(y1-y0||1));
+    ox=m+(W-2*m-(x1-x0)*sc)/2-x0*sc;oy=m+(H-2*m-(y1-y0)*sc)/2-y0*sc;
+  }
+  const S=p=>{const q=pr(p);return [ox+q[0]*sc,oy+q[1]*sc];};
   const ink=css('--ink'),mut=css('--muted');
   c.font='12px "JetBrains Mono", monospace';c.lineWidth=1;
   [[0,'x₁'],[1,'x₂'],[2,'x₃']].forEach(([i,lab])=>{
@@ -656,6 +672,7 @@ function draw(cv,prims,ext){
   prims.forEach(o=>{
     if(o.t==='poly'){c.beginPath();o.pts.forEach((q,i)=>{const Q=S(q);i?c.lineTo(...Q):c.moveTo(...Q);});c.closePath();if(o.fill){c.fillStyle=o.fill;c.fill();}if(o.stroke){c.strokeStyle=o.stroke;c.lineWidth=o.w||1.5;c.setLineDash(o.dash||[]);c.stroke();c.setLineDash([]);c.lineWidth=1;}}
     if(o.t==='line'){c.strokeStyle=o.color;c.lineWidth=o.w||1.2;c.setLineDash(o.dash||[]);c.beginPath();c.moveTo(...S(o.a));c.lineTo(...S(o.b));c.stroke();c.setLineDash([]);c.lineWidth=1;}
+    if(o.t==='lbl'){const Q=S(o.p);c.fillStyle=o.color||ink;c.font='600 13px "JetBrains Mono", monospace';c.fillText(o.text,Q[0]+6,Q[1]+4);c.font='12px "JetBrains Mono", monospace';}
     if(o.t==='pt'){const Q=S(o.p);c.fillStyle=o.color;c.beginPath();c.arc(Q[0],Q[1],o.r||3.5,0,7);c.fill();if(o.label){c.fillStyle=ink;c.font='600 12px "JetBrains Mono", monospace';c.fillText(o.label,Q[0]+6,Q[1]-6);c.font='12px "JetBrains Mono", monospace';}}
   });
 }
@@ -699,21 +716,46 @@ function s2(){const L=[+$('l1').value,+$('l2').value,+$('l3').value];const sun=c
   $('d2').innerHTML='<b>Was die Grafik zeigt:</b> Die Lampe L'+P(L)+' beleuchtet das gelbe Dreieck ABC. Drei gestrichelte Strahlen gehen von L durch die Ecken bis zum Boden. Das graue Schattendreieck hat die Ecken '+Ts.map((o,i)=>names[i]+'′'+P(o.q)).join(', ')+'. Es ist etwa '+fmt(a1/a0)+'-mal so groß wie das Dreieck.';}
 bind(['l1','l2','l3'],s2);
 
-// Station 3
+// Station 3 (drehbar, mit Abstandsregler)
 const D=[[3,5,2],[-1,5,2],[3,5,5]];const pn=['x₂x₃-Ebene','x₁x₃-Ebene','x₁x₂-Ebene'];
-function s3(){const k=+$('plane').value;const M=D.map(p=>p.map((x,i)=>i===k?-x:x));const mir=css('--mirror'),sun=css('--sun');
-  const r=6,pl=[[-r,-r],[-r,r],[r,r],[r,-r]].map(([a,b])=>{const q=[0,0,0];const o=[0,1,2].filter(i=>i!==k);q[o[0]]=a;q[o[1]]=b;return q;});
+const VIEW0={yaw:0.5,pitch:0.38};let view={...VIEW0};
+function s3(){const k=+$('plane').value,d=+$('dist').value;const mir=css('--mirror'),sun=css('--sun'),mut=css('--muted');
+  const shift=d-D[0][k];const Dd=D.map(p=>p.map((x,i)=>i===k?x+shift:x));
+  const M=Dd.map(p=>p.map((x,i)=>i===k?-x:x));
+  const o=[0,1,2].filter(i=>i!==k);
+  // feste Bildgröße je Spiegelebene, damit das Bild beim Drehen und Schieben nicht springt
+  const span=[];for(const dd of [0,8]){D.forEach(p=>{const q=p.slice();q[k]=p[k]+dd-D[0][k];span.push(q,q.map((x,i)=>i===k?-x:x));});}
+  const r=6,pl=[[-r,-r],[-r,r],[r,r],[r,-r]].map(([a,b])=>{const q=[0,0,0];q[o[0]]=a;q[o[1]]=b;return q;});
+  const F=Dd[0].map((x,i)=>i===k?0:x);
+  const par=Dd.every(p=>p[k]===Dd[0][k]);const hgt=2*d;
   draw($('c3'),[
     {t:'poly',pts:pl,fill:css('--mirror-soft'),stroke:mir,w:1,dash:[3,3]},
-    ...D.map((p,i)=>({t:'line',a:p,b:M[i],color:css('--muted'),dash:[4,3]})),
-    {t:'poly',pts:D,fill:css('--sun-soft'),stroke:sun,w:2},
+    ...Dd.map((p,i)=>({t:'line',a:p,b:M[i],color:mut,w:par?1.6:1.2,dash:par?[]:[4,3]})),
+    {t:'poly',pts:Dd,fill:css('--sun-soft'),stroke:sun,w:2},
     {t:'poly',pts:M,fill:css('--mirror-soft'),stroke:mir,w:2},
-    ...D.map((p,i)=>({t:'pt',p,color:sun,label:names[i]})),
-    ...M.map((p,i)=>({t:'pt',p,color:mir,label:names[i]+"'"}))],extOf(D.concat(M),1));
-  const par=D.every(p=>p[k]===D[0][k]);const hgt=2*Math.abs(D[0][k]);
-  $('r3').textContent=M.map((p,i)=>names[i]+"' = "+P(p)).join('\n')+'\n'+(par?'Dreieck liegt parallel zur Spiegelebene ⇒ gerades Prisma\nh = |AA\'| = '+fmt(hgt)+'   V = ½ · 3 · 4 · '+fmt(hgt)+' = '+fmt(6*hgt)+' VE':'Dreieck liegt nicht parallel zur Spiegelebene ⇒ kein gerades Prisma');
-  $('d3').innerHTML='<b>Was die Grafik zeigt:</b> Das gelbe Dreieck ABC und sein blaues Spiegelbild an der '+pn[k]+' (blau gestrichelte Fläche). Graue Linien verbinden jeden Punkt mit seinem Bildpunkt: '+M.map((p,i)=>names[i]+'′'+P(p)).join(', ')+'. '+(par?'Die beiden Dreiecke sind parallel, zusammen bilden sie ein gerades Prisma.':'Die Dreiecke stehen schräg zueinander, es entsteht kein gerades Prisma.');}
-$('plane').addEventListener('change',s3);
+    {t:'line',a:Dd[0],b:F,color:sun,w:2.4},
+    {t:'pt',p:F,color:mut,r:2.5},
+    {t:'lbl',p:Dd[0].map((x,i)=>(x+F[i])/2),text:'d',color:sun},
+    ...Dd.map((p,i)=>({t:'pt',p,color:sun,label:names[i]})),
+    ...M.map((p,i)=>({t:'pt',p,color:mir,label:names[i]+"'"}))],extOf(span.concat(pl),1),view);
+  const pts=Dd.map((p,i)=>names[i]+' = '+P(p)+"   "+names[i]+"' = "+P(M[i])).join('\n');
+  $('r3').textContent=pts+'\nd = '+fmt(d)+'   |AA\'| = 2d = '+fmt(hgt)+'\n'+(par?(d===0?'Das Dreieck liegt in der Spiegelebene: Bild und Original fallen zusammen, V = 0 VE':'Dreieck liegt parallel zur Spiegelebene ⇒ gerades Prisma\nh = 2d = '+fmt(hgt)+'   V = ½ · 3 · 4 · '+fmt(hgt)+' = '+fmt(6*hgt)+' VE'):'Dreieck liegt nicht parallel zur Spiegelebene ⇒ kein gerades Prisma');
+  $('d3').innerHTML='<b>Was die Grafik zeigt:</b> Das gelbe Dreieck ABC und sein blaues Spiegelbild an der '+pn[k]+' (blau gestrichelte Fläche). Der Punkt A hat den Abstand d = '+fmt(d)+' zur Spiegelebene, die gelbe Strecke markiert ihn. Graue Linien verbinden jeden Punkt mit seinem Bildpunkt: '+M.map((p,i)=>names[i]+'′'+P(p)).join(', ')+'. '+(par?(d===0?'Bei d = 0 liegt das Dreieck in der Spiegelebene und ist sein eigenes Spiegelbild.':'Die beiden Dreiecke sind parallel, zusammen bilden sie ein gerades Prisma der Höhe '+fmt(hgt)+'.'):'Die Dreiecke stehen schräg zueinander, es entsteht kein gerades Prisma.');}
+$('plane').addEventListener('change',()=>{const k=+$('plane').value;$('dist').value=Math.abs(D[0][k]);$('o-dist').textContent=fmt(+$('dist').value);s3();});
+bind(['dist'],s3);
+(function(){const cv=$('c3');let drag=null;
+  const clampP=p=>Math.max(-1.5,Math.min(1.5,p));
+  cv.addEventListener('pointerdown',e=>{drag={x:e.clientX,y:e.clientY,yaw:view.yaw,pitch:view.pitch};try{cv.setPointerCapture(e.pointerId);}catch(_){}});
+  cv.addEventListener('pointermove',e=>{if(!drag)return;view.yaw=drag.yaw-(e.clientX-drag.x)*0.01;view.pitch=clampP(drag.pitch+(e.clientY-drag.y)*0.01);s3();});
+  const end=()=>{drag=null;};cv.addEventListener('pointerup',end);cv.addEventListener('pointercancel',end);
+  cv.addEventListener('keydown',e=>{const st=0.08;
+    if(e.key==='ArrowLeft')view.yaw+=st;else if(e.key==='ArrowRight')view.yaw-=st;
+    else if(e.key==='ArrowUp')view.pitch=clampP(view.pitch-st);else if(e.key==='ArrowDown')view.pitch=clampP(view.pitch+st);else return;
+    e.preventDefault();s3();});
+  $('view-reset').addEventListener('click',()=>{view={...VIEW0};s3();});
+  $('view-top').addEventListener('click',()=>{const k=+$('plane').value;
+    view=k===2?{yaw:0,pitch:Math.PI/2}:k===1?{yaw:Math.PI/2,pitch:0}:{yaw:0,pitch:0};s3();});
+})();
 
 function all(){s1();s2();s3();}
 all();addEventListener('resize',all);
