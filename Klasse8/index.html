@@ -7,7 +7,7 @@
 <meta name="description" content="Lernspiel Wahrscheinlichkeit Klasse 8: Laplace, Baumdiagramme, Pfadregel, Summenregel, Gegenereignis, Ziehen mit und ohne Zurücklegen.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Limelight&family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
 /* Layout-Idee: Kästchenpapier aus dem Matheheft, Aufkleber-Karten mit harter Kante, Textmarker-Gelb für das Wichtige. */
 :root{
@@ -158,6 +158,70 @@ details[open] summary{margin-bottom:8px}
 #confetti{position:fixed;inset:0;pointer-events:none;z-index:70}
 .foot{text-align:center;color:var(--muted);font-size:.85rem;padding:30px 16px}
 
+
+/* ===== Casino-Thema: grüner Spieltisch-Filz, Karten in Elfenbein mit Goldrand, Jetons als Knöpfe ===== */
+:root{
+  --felt:#0f5a3a; --felt-dark:#083823; --gold:#e8c25a; --gold-deep:#b8902e; --ivory:#fbf6e9;
+  --ink:#1b1b1b; --muted:#5e5648; --card:var(--ivory); --accent:#b3122e; --hl:#e8c25a;
+  --good:#1f7a4a; --bad:#b3122e; --warn:#9a6a00;
+  --c-laplace:#b3122e; --c-tree:#1f7a4a; --c-pfad:#1b1b1b; --c-summe:#5b2a86; --c-gegen:#b8902e; --c-ohne:#1d4f91;
+  --font-display:'Limelight','Baloo 2',Georgia,serif;
+  --sh:0 6px 0 rgba(0,0,0,.35),0 10px 24px rgba(0,0,0,.35);
+}
+body{color:var(--ivory);background-color:var(--felt);
+  background-image:radial-gradient(ellipse at 50% 30%,rgba(255,255,255,.10),transparent 60%),radial-gradient(ellipse at 50% 120%,rgba(0,0,0,.45),transparent 60%),
+  repeating-linear-gradient(45deg,rgba(0,0,0,.035) 0 2px,transparent 2px 5px);background-size:auto;background-attachment:fixed}
+h1,h2{letter-spacing:.02em;font-weight:400}
+.card{color:var(--ink);background:var(--ivory);border:2px solid var(--gold-deep);box-shadow:inset 0 0 0 5px var(--ivory),inset 0 0 0 6.5px var(--gold),var(--sh);position:relative}
+.card::before,.card::after{position:absolute;font-size:15px;line-height:1;color:var(--accent);opacity:.55;pointer-events:none}
+.card::before{content:"♥";top:10px;right:14px}.card::after{content:"♠";bottom:12px;right:14px;color:var(--ink)}
+.modal.card::before,.modal.card::after{display:none}
+.logo{color:var(--gold);text-shadow:0 2px 0 rgba(0,0,0,.4)}
+.logo span{font-family:'Limelight',serif;font-weight:400;font-size:1.45rem;letter-spacing:.03em}
+.pillstat{background:var(--felt-dark);color:var(--gold);border:2px solid var(--gold);box-shadow:0 3px 0 rgba(0,0,0,.35)}
+.btn{border:2px solid var(--ink);box-shadow:0 4px 0 var(--ink);border-radius:999px;background:var(--ivory);color:var(--ink)}
+.btn:hover{transform:translateY(-1px);box-shadow:0 5px 0 var(--ink)}
+.btn:active{transform:translateY(4px);box-shadow:0 0 0 var(--ink)}
+.btn[disabled]{box-shadow:0 4px 0 var(--ink)}
+.btn.primary{background:var(--accent);color:#fff;border-color:#5c0716;box-shadow:0 4px 0 #5c0716,inset 0 0 0 3px rgba(255,255,255,.0);outline:2px dashed rgba(255,255,255,.55);outline-offset:-7px}
+.btn.primary:hover{box-shadow:0 5px 0 #5c0716}.btn.primary:active{box-shadow:0 0 0 #5c0716}
+.btn.yellow{background:linear-gradient(180deg,#f3d77e,var(--gold) 55%,var(--gold-deep));border-color:#6d531a;box-shadow:0 4px 0 #6d531a}
+.btn:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+.mc .btn{border-radius:12px}
+.link{color:var(--accent)}
+.ghost{color:var(--gold)}
+.secthead h2{color:var(--gold);text-shadow:0 2px 0 rgba(0,0,0,.45)}
+.secthead .muted{color:#cfe3d6}
+.foot{color:#cfe3d6}.foot a{color:var(--gold)!important}
+.qtop .chip{background:var(--felt-dark);color:var(--gold);border-color:var(--gold)}
+.chip{border-color:var(--ink)}
+.chip.l0{background:#f3d6d6}.chip.l1{background:#f5e7b8}.chip.l2{background:#cfe8d8}.chip.l3{background:var(--gold)}
+.dots i{border-color:var(--gold);background:var(--felt-dark);width:16px;height:16px;box-shadow:inset 0 0 0 2px var(--felt-dark)}
+.dots i.ok{background:var(--good)}.dots i.half{background:var(--gold)}.dots i.no{background:var(--bad)}.dots i.cur{box-shadow:0 0 0 3px var(--ivory)}
+.xpbar{background:#e9e2cf;border-color:var(--ink)}
+.xpbar>i{background:repeating-linear-gradient(90deg,var(--accent) 0 12px,var(--ivory) 12px 15px,var(--gold) 15px 27px,var(--ivory) 27px 30px)}
+.topic .ic{border-radius:50%;border:3px solid var(--gold);box-shadow:0 0 0 2px var(--ink),inset 0 0 0 3px rgba(255,255,255,.25)}
+.quote{border-left-color:var(--gold);font-style:italic}
+mark{background:linear-gradient(transparent 45%,#f3d77e 45%)}
+.qtext b{background:linear-gradient(transparent 50%,#f3d77e 50%)}
+.inrow input{background:#fff;border-color:var(--ink)}
+.inrow input:focus{outline-color:var(--gold)}
+.fb{border-color:var(--ink)}
+.fb.good{background:#dcefe3}.fb.warn{background:#fbf0cd}.fb.bad{background:#f6dcdc}.fb.info{background:#efe9d8}
+.fb.good .title::before{content:"♣ "}.fb.bad .title::before{content:"♦ ";color:var(--bad)}
+.solbox{background:#fff;border-color:var(--gold-deep)}
+.learn{background:#fff;border-left-color:var(--accent)}
+.kpi,.badge,.mist .item{background:#fff;border-color:var(--gold-deep)}
+.trow{border-bottom-color:#d9cfb5}
+.mbar{background:#e9e2cf;border-color:var(--ink)}
+.toast{background:linear-gradient(180deg,#f3d77e,var(--gold));color:var(--ink);border-color:var(--ink);box-shadow:var(--sh)}
+.ov{background:rgba(4,25,15,.7)}
+.tree .e.hl{stroke:var(--accent)}
+.tree .pill.q rect{fill:var(--gold)}
+.sumgrid td.h{background:var(--gold)}
+.sumgrid th{background:#efe9d8}
+.ring circle:first-child{stroke:#e9e2cf}
+
 @media (max-width:820px){.hero{grid-template-columns:1fr}.grid6{grid-template-columns:repeat(2,1fr)}.kpis{grid-template-columns:repeat(2,1fr)}}
 @media (max-width:520px){.grid6{grid-template-columns:1fr}.trow{grid-template-columns:1fr auto}.trow .mbar{grid-column:1/-1;order:3}h1{font-size:1.7rem}body{font-size:16px}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
@@ -239,7 +303,7 @@ function diceRow(hl){hl=hl||[];const s=44,g=10;let o=`<svg viewBox="0 0 ${6*s+5*
 function treeSVG(t){
   const two=!!t.l2,leaves=[];
   if(two)t.l1.forEach((_,i)=>t.l2[i].forEach((_,j)=>leaves.push([i,j])));else t.l1.forEach((_,i)=>leaves.push([i]));
-  const gap=two?46:58,top=24,H=top*2+(leaves.length-1)*gap,W=two?(t.end?600:470):300;
+  const gap=two?56:58,top=24,H=top*2+(leaves.length-1)*gap,W=two?(t.end?600:470):300;
   const X0=18,X1=two?190:250,X2=380,y1=[],y2={};
   leaves.forEach((l,k)=>{if(two)y2[l[0]+'-'+l[1]]=top+k*gap;else y1[l[0]]=top+k*gap});
   if(two)t.l1.forEach((_,i)=>{const ys=t.l2[i].map((_,j)=>y2[i+'-'+j]);y1[i]=(ys[0]+ys[ys.length-1])/2});
@@ -521,7 +585,7 @@ const yesterday=()=>{const d=new Date();d.setDate(d.getDate()-1);return d.toLoca
 const GOAL=10;
 const LV=[{n:'Einsteiger',c:'l0'},{n:'Auf dem Weg',c:'l1'},{n:'Sicher',c:'l2'},{n:'Profi',c:'l3'}];
 const lvlIdx=m=>m<25?0:m<50?1:m<75?2:3;
-const mColor=m=>['#cf4128','#e9a900','#15885a','#2f5bea'][lvlIdx(m)];
+const mColor=m=>['#b3122e','#d99a1e','#1f7a4a','#b8902e'][lvlIdx(m)];
 const XPT=[0,60,150,280,450,660,920,1230,1600,2050,2600];
 const TITLES=['Würfel-Neuling','Zufalls-Entdecker','Münz-Werfer','Baum-Kletterer','Pfad-Finder','Urnen-Expertin/-Experte','Glücksrad-Kenner','Wahrscheinlichkeits-Profi','Zufalls-Meister','Laplace-Legende','Laplace-Legende'];
 function plevel(xp){let l=0;while(l<XPT.length-1&&xp>=XPT[l+1])l++;return l}
@@ -534,8 +598,8 @@ const BADGES=[
  {id:'master',n:'Laplace-Meister',d:'Alle Themen auf „Profi“'},{id:'days3',n:'Dranbleiber',d:'3 Tage hintereinander geübt'}];
 
 /* ================= Motivation ================= */
-const PRAISE=['Treffer!','Stark gerechnet!','Genau so!','Richtig – weiter so!','Sauber gelöst!','Volltreffer!','Du hast den Zufall im Griff!','Perfekt!'];
-const PRAISE2=['Geschafft! Der Tipp hat geholfen.','Super, im zweiten Anlauf richtig!','Gut korrigiert – genau so lernt man!'];
+const PRAISE=['Jackpot!','Royal Flush!','Volle Punktzahl am Tisch!','Treffer!','Stark gerechnet!','Genau so!','Richtig – weiter so!','Sauber gelöst!','Volltreffer!','Du hast den Zufall im Griff!','Perfekt!'];
+const PRAISE2=['Zweite Karte, voller Gewinn!','Geschafft! Der Tipp hat geholfen.','Super, im zweiten Anlauf richtig!','Gut korrigiert – genau so lernt man!'];
 const RETRY=['Versuch es nochmal – du bist nah dran!','Lies den Tipp und probier es noch einmal.','Kein Problem, ein zweiter Versuch ist frei!'];
 const AFTERW=['Fehler sind Lernchancen. Die nächste Aufgabe schaffst du!','Nicht aufgeben – jeder Profi hat so angefangen.','Schau dir den Lösungsweg an. Beim nächsten Mal sitzt es!','Dranbleiben lohnt sich: Mit jeder Aufgabe wirst du sicherer.'];
 const QUOTES=['Jede Aufgabe macht dich ein Stück sicherer.','Fehler zeigen dir, was du als Nächstes lernen kannst.','Ein paar Minuten täglich bringen mehr als eine Stunde am Wochenende.','Der Zufall ist nicht vorhersehbar – dein Lernerfolg schon!'];
@@ -611,7 +675,7 @@ function onRight(mcIdx){
   Sess.done=true;const out=Sess.tries===1?'first':'second';const xp=record(out);
   if(Q.type==='mc')document.querySelector(`[data-i="${mcIdx}"]`).classList.add('right');lockInputs();
   const title=Sess.mode==='place'?'Richtig!':(out==='first'?pick(PRAISE):pick(PRAISE2));
-  $('#fb').innerHTML=`<div class="fb good"><div class="title">${title}</div><div><b>+${xp} XP</b>${streakLine()}</div><details><summary>Lösungsweg ansehen</summary><div class="solbox">${Q.sol}</div></details>${nextBtn()}</div>`;
+  $('#fb').innerHTML=`<div class="fb good"><div class="title">${title}</div><div><b>+${xp} Chips</b>${streakLine()}</div><details><summary>Lösungsweg ansehen</summary><div class="solbox">${Q.sol}</div></details>${nextBtn()}</div>`;
   focusNext();if(S.streak>0&&S.streak%5===0)confetti();
 }
 function onFail(key,tip,mcIdx){
@@ -623,31 +687,32 @@ function onFail(key,tip,mcIdx){
    ${key?`<div><b>Dein Fehler: ${MIST[key].n}.</b> ${tip||MIST[key].tip}</div>`:''}
    <div class="solbox"><h4>So geht's</h4>${Q.sol}</div>
    <div class="learn"><h4>Zum Weiterlernen: ${TN[Q.topic]}</h4><div>${L.rule}</div><div class="small">${L.pts[0]}</div><button class="link" data-act="cheat" data-t="${Q.topic}">Ganzen Spickzettel öffnen</button></div>
-   <div><b>+${xp} XP fürs Dranbleiben.</b> ${pick(AFTERW)}</div>${nextBtn()}</div>`;focusNext();
+   <div><b>+${xp} Chips fürs Dranbleiben.</b> ${pick(AFTERW)}</div>${nextBtn()}</div>`;focusNext();
 }
 function nextBtn(){const last=Sess.idx+1>=Sess.total;return `<div><button class="btn primary" data-act="next" id="nextbtn">${last?'Auswertung ansehen':'Weiter'} →</button></div>`}
 function focusNext(){const b=$('#nextbtn');if(b)b.focus()}
 function lockInputs(){const i=$('#ans');if(i)i.disabled=true;document.querySelectorAll('[data-act="check"],[data-act="hint"],.mc .btn').forEach(b=>b.disabled=true)}
-function showHint(){Sess.hint=true;$('#fb').innerHTML=`<div class="fb info"><div><b>Tipp:</b> ${Q.hint}</div><div class="small muted">Mit Tipp gibt es halbe XP – lernen geht vor!</div></div>`;const i=$('#ans');if(i)i.focus()}
+function showHint(){Sess.hint=true;$('#fb').innerHTML=`<div class="fb info"><div><b>Tipp:</b> ${Q.hint}</div><div class="small muted">Mit Tipp gibt es nur halb so viele Chips – lernen geht vor!</div></div>`;const i=$('#ans');if(i)i.focus()}
 
 /* ================= Ansichten ================= */
 const app=$('#app');
 function renderBar(){const l=plevel(S.xp);
   $('#bar').innerHTML=`<button class="logo" data-act="home" aria-label="Zur Startseite">${logo()}<span>Zufall im Griff</span></button>
-  <div class="stats"><span class="pillstat" title="Level">${starIcon('#ffd23f')} Level ${l+1}</span><span class="pillstat" title="Erfahrungspunkte">${S.xp} XP</span>
+  <div class="stats"><span class="pillstat" title="Level">${starIcon('#e8c25a')} Level ${l+1}</span><span class="pillstat" title="Gewonnene Chips">${chipIcon()} ${S.xp}</span>
   <span class="pillstat" title="Richtige Antworten in Folge">${flame()} ${S.streak}</span><span class="pillstat" title="Tagesziel">${S.day===today()?S.today:0}/${GOAL} heute</span></div>`}
-function logo(){return `<svg viewBox="0 0 36 36"><rect x="3" y="3" width="30" height="30" rx="8" fill="#ffd23f" stroke="#18223d" stroke-width="2.5" transform="rotate(-8 18 18)"/><circle cx="12" cy="12" r="2.6" fill="#18223d"/><circle cx="18" cy="18" r="2.6" fill="#18223d"/><circle cx="24" cy="24" r="2.6" fill="#18223d"/></svg>`}
+function logo(){return `<svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="16" fill="#b3122e" stroke="#e8c25a" stroke-width="2"/><g stroke="#fff" stroke-width="4">${[0,60,120].map(a=>`<line x1="18" y1="2.5" x2="18" y2="8" transform="rotate(${a} 18 18)"/><line x1="18" y1="28" x2="18" y2="33.5" transform="rotate(${a} 18 18)"/>`).join('')}</g><circle cx="18" cy="18" r="9" fill="#fbf6e9" stroke="#e8c25a" stroke-width="1.5"/><text x="18" y="22.5" text-anchor="middle" font-size="12" fill="#b3122e">♦</text></svg>`}
+function chipIcon(){return `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10.5" fill="#e8c25a" stroke="#1b1b1b" stroke-width="1.4"/><circle cx="12" cy="12" r="6" fill="none" stroke="#1b1b1b" stroke-width="1.4" stroke-dasharray="3 2"/></svg>`}
 function flame(){return `<svg viewBox="0 0 24 24"><path d="M12 2c1 4 6 6 6 12a6 6 0 0 1-12 0c0-3 2-5 3-6 0 2 1 3 2 3 0-3-1-6 1-9z" fill="#d9462a" stroke="#18223d" stroke-width="1.5"/></svg>`}
 function starIcon(f,s=18){return `<svg viewBox="0 0 24 24" width="${s}" height="${s}"><path d="M12 2l3 6.6 7.2.8-5.4 4.9 1.5 7.1L12 17.8 5.7 21.4l1.5-7.1L1.8 9.4 9 8.6z" fill="${f}" stroke="#18223d" stroke-width="1.6" stroke-linejoin="round"/></svg>`}
-function ring(v,max){const p=clamp(v/max,0,1),R=30,C=2*Math.PI*R;return `<svg class="ring" viewBox="0 0 78 78"><circle cx="39" cy="39" r="${R}" fill="none" stroke="#e8ecf5" stroke-width="10"/><circle cx="39" cy="39" r="${R}" fill="none" stroke="${p>=1?'#15885a':'#2f5bea'}" stroke-width="10" stroke-linecap="round" stroke-dasharray="${C*p} ${C}" transform="rotate(-90 39 39)"/><text x="39" y="45" text-anchor="middle" font-family="Baloo 2,sans-serif" font-weight="800" font-size="18" fill="#18223d">${v}/${max}</text></svg>`}
+function ring(v,max){const p=clamp(v/max,0,1),R=30,C=2*Math.PI*R;return `<svg class="ring" viewBox="0 0 78 78"><circle cx="39" cy="39" r="${R}" fill="none" stroke="#e8ecf5" stroke-width="10"/><circle cx="39" cy="39" r="${R}" fill="none" stroke="${p>=1?'#1f7a4a':'#b3122e'}" stroke-width="10" stroke-linecap="round" stroke-dasharray="${C*p} ${C}" transform="rotate(-90 39 39)"/><text x="39" y="45" text-anchor="middle" font-family="Baloo 2,sans-serif" font-weight="800" font-size="18" fill="#18223d">${v}/${max}</text></svg>`}
 function chip(m){const l=LV[lvlIdx(m)];return `<span class="chip ${l.c}">${l.n}</span>`}
 function mbar(m){return `<div class="mbar" role="progressbar" aria-valuenow="${m}" aria-valuemin="0" aria-valuemax="100"><i style="width:${Math.max(m,2)}%;background:${mColor(m)}"></i></div>`}
 
 function renderHome(){Sess=null;renderBar();const l=plevel(S.xp),lo=XPT[l],hi=XPT[l+1]||XPT[l]+500,rec=recommend(),td=S.day===today()?S.today:0;
   app.innerHTML=`<section class="hero">
-   <div class="card"><div class="lvlrow"><h1>${S.total?'Weiter geht’s!':'Hallo! Bereit für den Zufall?'}</h1></div>
+   <div class="card"><div class="lvlrow"><h1>${S.total?'Neue Runde, neues Glück!':'Willkommen am Tisch!'}</h1></div>
     <p>${S.placed?`Du bist <b>${TITLES[l]}</b>. Empfohlen für dich: <mark>${TN[rec]}</mark>.`:'Lerne Wahrscheinlichkeit spielerisch: Würfel, Glücksräder, Urnen und Baumdiagramme. Starte mit dem kurzen Einstufungstest – dann weiß die App, wo du stehst.'}</p>
-    <div><div class="lvlrow small"><b>Level ${l+1} · ${TITLES[l]}</b><span class="muted">${S.xp} / ${hi} XP</span></div><div class="xpbar"><i style="width:${clamp((S.xp-lo)/(hi-lo)*100,2,100)}%"></i></div></div>
+    <div><div class="lvlrow small"><b>Level ${l+1} · ${TITLES[l]}</b><span class="muted">${S.xp} / ${hi} Chips</span></div><div class="xpbar"><i style="width:${clamp((S.xp-lo)/(hi-lo)*100,2,100)}%"></i></div></div>
     <div class="row">${S.placed?`<button class="btn primary big" data-act="topic" data-t="${rec}">${TN[rec]} üben</button><button class="btn yellow big" data-act="mix">Mix-Training</button>`
       :`<button class="btn primary big" data-act="place">Einstufungstest starten</button><button class="btn big" data-act="mix">Direkt losüben</button>`}</div>
     ${S.placed?'':'<p class="small muted">12 Aufgaben, ca. 10 Minuten. Ohne Zeitdruck.</p>'}</div>
@@ -675,9 +740,9 @@ function renderQuiz(){renderBar();const q=Q,placing=Sess.mode==='place';
 function endRound(){const r=Sess.res,score=r.reduce((a,x)=>a+(x==='first'?1:x==='second'?.5:0),0),stars=score>=7?3:score>=5?2:1;if(stars===3){give('perfect');confetti()}save();
   const msg=stars===3?'Hervorragend! Du beherrschst das richtig gut.':stars===2?'Gute Runde! Noch ein bisschen Übung und du holst 3 Sterne.':'Du bist drangeblieben – das zählt! Schau dir die Tipps unten an und versuch es nochmal.';
   const top=Object.entries(Sess.mist).sort((a,b)=>b[1]-a[1]).slice(0,3);const ts=Sess.topic?[Sess.topic]:TOP;
-  app.innerHTML=`<section class="card stack" style="max-width:760px;margin:0 auto;text-align:center"><div class="stars">${[0,1,2].map(i=>starIcon(i<stars?'#ffd23f':'#e8ecf5',54)).join('')}</div>
-   <h1>Runde geschafft!</h1><p>${msg}</p>
-   <div class="kpis" style="text-align:left"><div class="kpi"><span class="small muted">Sofort richtig</span><b>${r.filter(x=>x==='first').length}/${r.length}</b></div><div class="kpi"><span class="small muted">Im 2. Versuch</span><b>${r.filter(x=>x==='second').length}</b></div><div class="kpi"><span class="small muted">XP verdient</span><b>+${Sess.xp}</b></div><div class="kpi"><span class="small muted">Beste Serie</span><b>${S.best}</b></div></div>
+  app.innerHTML=`<section class="card stack" style="max-width:760px;margin:0 auto;text-align:center"><div class="stars">${[0,1,2].map(i=>starIcon(i<stars?'#e8c25a':'#e9e2cf',54)).join('')}</div>
+   <h1>Runde beendet!</h1><p>${msg}</p>
+   <div class="kpis" style="text-align:left"><div class="kpi"><span class="small muted">Sofort richtig</span><b>${r.filter(x=>x==='first').length}/${r.length}</b></div><div class="kpi"><span class="small muted">Im 2. Versuch</span><b>${r.filter(x=>x==='second').length}</b></div><div class="kpi"><span class="small muted">Chips gewonnen</span><b>+${Sess.xp}</b></div><div class="kpi"><span class="small muted">Beste Serie</span><b>${S.best}</b></div></div>
    ${top.length?`<div class="mist" style="text-align:left"><h3>Daran kannst du arbeiten</h3>${top.map(([k,c])=>`<div class="item"><b>${MIST[k].n}</b> <span class="muted small">(${c}×)</span><div>${MIST[k].tip}</div></div>`).join('')}</div>`:'<p><b>Keine typischen Fehler in dieser Runde.</b></p>'}
    <div style="text-align:left"><h3 style="margin-bottom:6px">Dein Stand</h3>${ts.map(t=>`<div class="trow"><span><b>${TN[t]}</b></span>${mbar(S.m[t])}${chip(S.m[t])}</div>`).join('')}</div>
    <div class="row" style="justify-content:center"><button class="btn primary big" data-act="${Sess.topic?'topic':'mix'}" data-t="${Sess.topic||''}">Nächste Runde</button><button class="btn big" data-act="home">Zur Übersicht</button></div></section>`}
@@ -703,7 +768,7 @@ function renderWissen(){Sess=null;renderBar();const avg=Math.round(TOP.reduce((a
    ${Object.keys(S.mist).length?`<div class="card">${mistList(S.mist)}</div>`:''}
    <div class="card stack"><h2>Abzeichen <span class="muted small">${S.badges.length}/${BADGES.length}</span></h2><div class="badges">${BADGES.map(b=>`<div class="badge${S.badges.includes(b.id)?'':' off'}">${medal()}<b>${b.n}</b><span class="small muted">${b.d}</span></div>`).join('')}</div></div>
    <div class="row"><button class="btn primary" data-act="mix">Mix-Training starten</button><button class="btn" data-act="home">Zur Übersicht</button><button class="link" data-act="reset" id="resetbtn" style="margin-left:auto;color:var(--bad)">Fortschritt löschen</button></div></section>`}
-function medal(){return `<svg viewBox="0 0 42 42"><path d="M13 2h6l4 12h-6zM29 2h-6l-4 12h6z" fill="#2f5bea" stroke="#18223d" stroke-width="1.5"/><circle cx="21" cy="26" r="13" fill="#ffd23f" stroke="#18223d" stroke-width="2"/><path d="M21 18l2.4 5 5.4.6-4 3.7 1.1 5.3-4.9-2.8-4.9 2.8 1.1-5.3-4-3.7 5.4-.6z" fill="#fff" stroke="#18223d" stroke-width="1.2"/></svg>`}
+function medal(){return `<svg viewBox="0 0 42 42"><path d="M13 2h6l4 12h-6zM29 2h-6l-4 12h6z" fill="#b3122e" stroke="#1b1b1b" stroke-width="1.5"/><circle cx="21" cy="26" r="13" fill="#e8c25a" stroke="#18223d" stroke-width="2"/><path d="M21 18l2.4 5 5.4.6-4 3.7 1.1 5.3-4.9-2.8-4.9 2.8 1.1-5.3-4-3.7 5.4-.6z" fill="#fff" stroke="#18223d" stroke-width="1.2"/></svg>`}
 
 function openCheat(t){const L=LEARN[t];const ov=document.createElement('div');ov.className='ov';ov.setAttribute('role','dialog');ov.setAttribute('aria-modal','true');
   ov.innerHTML=`<div class="card modal stack"><div class="row" style="justify-content:space-between"><h2>Spickzettel: ${TN[t]}</h2><button class="btn" data-act="close" aria-label="Schließen">✕</button></div>
@@ -716,7 +781,7 @@ function closeOv(){document.querySelectorAll('.ov').forEach(o=>o.remove())}
 
 function toast(t,d){const el=document.createElement('div');el.className='toast';el.innerHTML=`<b>${t}</b><span class="small">${d}</span>`;$('#toasts').appendChild(el);setTimeout(()=>el.remove(),3800)}
 function confetti(){if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;const c=$('#confetti'),x=c.getContext('2d');c.width=innerWidth;c.height=innerHeight;
-  const cols=['#ffd23f','#2f5bea','#d9462a','#15885a','#7b46cf'],P=Array.from({length:120},()=>({x:innerWidth/2,y:innerHeight/3,vx:(Math.random()-.5)*14,vy:Math.random()*-12-3,s:Math.random()*8+4,c:pick(cols),r:Math.random()*6}));
+  const cols=['#e8c25a','#f5e7b8','#b3122e','#ffffff','#1b1b1b'],P=Array.from({length:120},()=>({x:innerWidth/2,y:innerHeight/3,vx:(Math.random()-.5)*14,vy:Math.random()*-12-3,s:Math.random()*8+4,c:pick(cols),r:Math.random()*6}));
   let f=0;(function tick(){x.clearRect(0,0,c.width,c.height);P.forEach(p=>{p.vy+=.35;p.x+=p.vx;p.y+=p.vy;p.r+=.15;x.save();x.translate(p.x,p.y);x.rotate(p.r);x.fillStyle=p.c;x.fillRect(-p.s/2,-p.s/4,p.s,p.s/2);x.restore()});if(++f<110)requestAnimationFrame(tick);else x.clearRect(0,0,c.width,c.height)})()}
 
 /* ================= Ereignisse ================= */
