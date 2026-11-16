@@ -6,14 +6,14 @@ Mit GitHub Pages sind die Apps hier erreichbar:
 
 | App | Datei | Adresse |
 |---|---|---|
-| Gipfelweg Lineare Funktionen | `index.html` | `https://frauotb.github.io/Mathe/Klasse8/` |
+| Gipfelweg Lineare Funktionen | `Gipfelweg.html` | `https://frauotb.github.io/Mathe/Klasse8/Gipfelweg.html` |
 | Zufall im Griff – Lernspiel Wahrscheinlichkeit | `ZufallImGriffLernspielWahrscheinlichkeit.html` | `https://frauotb.github.io/Mathe/Klasse8/ZufallImGriffLernspielWahrscheinlichkeit.html` |
 
 Lokal kann man jede Datei auch einfach per Doppelklick im Browser öffnen.
 
 ---
 
-## Gipfelweg Lineare Funktionen (`index.html`)
+## Gipfelweg Lineare Funktionen (`Gipfelweg.html`)
 
 Ein Selbstlernpfad als Bergroute mit sechs Etappen und einem Gipfel:
 
